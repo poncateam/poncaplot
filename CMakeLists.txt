@@ -36,6 +36,8 @@ else()
 endif()
 
 # Add nanogui
+set( NANOGUI_BUILD_EXAMPLES CACHE BOOL OFF)
+set( NANOGUI_BUILD_PYTHON CACHE BOOL OFF)
 message("\n\n == CMAKE recursively building NanoGUI\n")
 add_subdirectory("external/nanogui")
 
