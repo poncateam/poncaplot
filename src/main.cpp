@@ -48,100 +48,51 @@
 #endif
 #include <stb_image.h>
 
+const int tex_width = 500;
+const int tex_height = 500;
+
 using namespace nanogui;
 
 class ExampleApplication : public Screen {
 public:
-    ExampleApplication() : Screen(Vector2i(1024, 768), "PoncaPlot") {
+    ExampleApplication()
+    : Screen(Vector2i(1024, 768), "PoncaPlot"){
         inc_ref();
-        Window *window = new Window(this, "Controls");
-        window->set_position(Vector2i(15, 15));
+        auto *window = new Window(this, "Controls");
+        window->set_position(Vector2i(0, 0));
         window->set_layout(new GroupLayout());
 
+        window = new Window(this, "Image");
+        window->set_position(Vector2i(100, 0));
+        window->set_size(Vector2i(768,768));
+        window->set_layout(new GroupLayout(3));
+
+        m_textureBuffer = new uint8_t [tex_width*tex_height];
+        m_texture = new Texture(
+                Texture::PixelFormat::RGBA,
+                Texture::ComponentFormat::UInt8,
+                {tex_width,tex_height},
+                Texture::InterpolationMode::Trilinear,
+                Texture::InterpolationMode::Nearest);
+
+        for(auto j = 0; j!=tex_height*tex_width; ++j){
+            float grad = 255*float(j)/float(tex_height*tex_width);
+            m_textureBuffer[j*4] = grad;
+            m_textureBuffer[j*4+1] = grad;
+            m_textureBuffer[j*4+2] = grad;
+            m_textureBuffer[j*4+3] = 255;
+
+        }
+
+        m_texture->upload(m_textureBuffer);
+
+        ImageView *image_view = new ImageView(window);
+        image_view->set_size(Vector2i(768,768));
+        image_view->set_image( m_texture );
+        image_view->center();
+
+
         perform_layout();
-
-        /* All NanoGUI widgets are initialized at this point. Now
-           create shaders to draw the main window contents.
-
-           NanoGUI comes with a simple wrapper around OpenGL 3, which
-           eliminates most of the tedious and error-prone shader and buffer
-           object management.
-        */
-
-        m_render_pass = new RenderPass({ this });
-        m_render_pass->set_clear_color(0, Color(0.3f, 0.3f, 0.32f, 1.f));
-
-        m_shader = new Shader(
-            m_render_pass,
-
-            /* An identifying name */
-            "a_simple_shader",
-
-#if defined(NANOGUI_USE_OPENGL)
-            R"(/* Vertex shader */
-            #version 330
-            in vec3 position;
-            void main() {
-                gl_Position = vec4(position, 1.0);
-            })",
-
-            /* Fragment shader */
-            R"(#version 330
-            out vec4 color;
-            uniform float intensity;
-            void main() {
-                color = vec4(vec3(intensity), 1.0);
-            })"
-#elif defined(NANOGUI_USE_GLES)
-            R"(/* Vertex shader */
-            precision highp float;
-            attribute vec3 position;
-            void main() {
-                gl_Position = vec4(position, 1.0);
-            })",
-
-            /* Fragment shader */
-            R"(precision highp float;
-            uniform float intensity;
-            void main() {
-                gl_FragColor = vec4(vec3(intensity), 1.0);
-            })"
-#elif defined(NANOGUI_USE_METAL)
-            R"(using namespace metal;
-            struct VertexOut {
-                float4 position [[position]];
-            };
-
-            vertex VertexOut vertex_main(const device packed_float3 *position,
-                                         uint id [[vertex_id]]) {
-                VertexOut vert;
-                vert.position = float4(position[id], 1.f);
-                return vert;
-            })",
-
-            /* Fragment shader */
-            R"(using namespace metal;
-            fragment float4 fragment_main(const constant float &intensity) {
-                return float4(intensity);
-            })"
-#endif
-        );
-
-        uint32_t indices[3*2] = {
-            0, 1, 2,
-            2, 3, 0
-        };
-
-        float positions[3*4] = {
-            -1.f, -1.f, 0.f,
-            1.f, -1.f, 0.f,
-            1.f, 1.f, 0.f,
-            -1.f, 1.f, 0.f
-        };
-
-        m_shader->set_buffer("indices", VariableType::UInt32, {3*2}, indices);
-        m_shader->set_buffer("position", VariableType::Float32, {4, 3}, positions);
-        m_shader->set_uniform("intensity", 1.f);
     }
 
     virtual bool keyboard_event(int key, int scancode, int action, int modifiers) {
@@ -160,22 +111,22 @@ public:
     }
 
     virtual void draw_contents() {
-        m_render_pass->resize(framebuffer_size());
-        m_render_pass->begin();
-
-        m_shader->begin();
-        m_shader->draw_array(Shader::PrimitiveType::Triangle, 0, 6, true);
-        m_shader->end();
-
-        m_render_pass->end();
+        Screen::draw_contents();
+//        m_render_pass->resize(framebuffer_size());
+//        m_render_pass->begin();
+//
+//        m_shader->begin();
+//        m_shader->draw_array(Shader::PrimitiveType::Triangle, 0, 6, true);
+//        m_shader->end();
+//
+//        m_render_pass->end();
     }
 private:
     ref<Shader> m_shader;
     ref<RenderPass> m_render_pass;
 
-    using ImageHolder = std::unique_ptr<uint8_t[], void(*)(void*)>;
-    std::vector<std::pair<ref<Texture>, ImageHolder>> m_images;
-    int m_current_image;
+    uint8_t*  m_textureBuffer {nullptr};
+    Texture*  m_texture {nullptr};
 };
 
 int main(int /* argc */, char ** /* argv */) {
