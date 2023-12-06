@@ -23,14 +23,25 @@ MyView::isInsideImage(const Vector2f &lp) const {
     return true;
 }
 
+//#define USE_KDTREE
 int
 MyView::findPointId(const Vector2f &lp, float epsilon) const{
-    int i = 0;
-    for(const auto&p : m_points)
-    {
-        if(norm((lp-p)) <= epsilon)
-            return i;
-        ++i;
+    if(! m_points.empty()) {
+        int i = 0;
+#ifndef USE_KDTREE
+        for(const auto&p : m_points) {
+            Vector2f query(p.x(), p.y());
+            if (norm((lp - query)) <= epsilon)
+                return i;
+            ++i;
+        }
+#else
+        DataPoint::VectorType query(lp.x(), lp.y());
+        auto res = m_tree.nearest_neighbor(query);
+        if (res.begin() != res.end() &&
+           (query-m_tree.point_data()[res.get()].pos()).norm()<epsilon)
+            return res.get();
+#endif
     }
     return -1;
 }
@@ -45,8 +56,8 @@ MyView::mouse_button_event(const Vector2i &p, int button, bool down, int modifie
         auto pointId = findPointId(lp);
         if (pointId < 0) { // create new point
             std::cout << "MyView::add new point" << std::endl;
-            m_points.push_back( lp );
-            m_updateFunction();
+            m_points.emplace_back( lp.x(), lp.y(), 0, 1 );
+            updateCollection();
             return true;
         } else {
             m_movedPoint = pointId;
@@ -71,13 +82,14 @@ MyView::mouse_drag_event(const nanogui::Vector2i &p, const nanogui::Vector2i &re
                 case 1: //left click
                     // if is on a point
                     std::cout << "Move point by [" << rel << "]" << std::endl;
-                    m_points[m_movedPoint] = lp;
-                    m_updateFunction();
+                    m_points[m_movedPoint].x() = lp.x();
+                    m_points[m_movedPoint].y() = lp.y();
+                    updateCollection();
                     break;
                 case 2: //right click
                     // if is on a point
                     std::cout << "Change normal by [" << rel << "]" << std::endl;
-                    m_updateFunction();
+                    updateCollection();
                     break;
                 default:
                     break;
@@ -85,4 +97,15 @@ MyView::mouse_drag_event(const nanogui::Vector2i &p, const nanogui::Vector2i &re
         }
     }
     return true;
+}
+
+void
+MyView::updateCollection() {
+    // recompute KdTree
+    if(m_points.empty())
+        m_tree.clear();
+    else
+        m_tree.build(m_points );
+
+    m_updateFunction();
 }

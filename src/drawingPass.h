@@ -45,9 +45,9 @@ struct DisplayPoint : public DrawingPass {
     inline explicit DisplayPoint(const nanogui::Vector4i &pointColor = {0,0,0,255})
             : DrawingPass(), m_pointColor(pointColor) {}
     void render(const MyView::PointCollection& points, uint8_t*buffer, int w, int h) override{
-        for (const auto&p : points){
-            int i (std::floor(p.x()));
-            int j (std::floor(p.y()));
+        for (const auto&p : points.point_data()){
+            int i (std::floor(p.pos().x()));
+            int j (std::floor(p.pos().y()));
             for (int u = -1; u <= 1; ++u ){
                 for (int v = -1; v <= 1; ++v ){
                     //this is suboptimal: we check multiple time, could be done better.

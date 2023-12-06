@@ -89,6 +89,7 @@ public:
         m_passes.clear();
         m_passes.push_back( new FillPass( {0,0,0,255}));
         m_passes.push_back( new DistanceField());
+//        m_passes.push_back( new DistanceFieldWithKdTree()); // too slow
         m_passes.push_back( new DisplayPoint({255,0,0,255}));
 
         image_view = new MyView(window);
