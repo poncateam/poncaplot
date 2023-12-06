@@ -27,17 +27,16 @@
 #include <nanogui/textbox.h>
 #include <nanogui/slider.h>
 #include <nanogui/imagepanel.h>
-#include <nanogui/imageview.h>
 #include <nanogui/vscrollpanel.h>
-#include <nanogui/colorwheel.h>
-#include <nanogui/colorpicker.h>
 #include <nanogui/graph.h>
 #include <nanogui/tabwidget.h>
 #include <nanogui/texture.h>
-#include <nanogui/shader.h>
-#include <nanogui/renderpass.h>
+
 #include <iostream>
 #include <memory>
+#include <random>
+
+#include "myview.h"
 
 #define STB_IMAGE_STATIC
 #define STB_IMAGE_IMPLEMENTATION
@@ -51,10 +50,27 @@
 const int tex_width = 500;
 const int tex_height = 500;
 
+
+std::random_device rd;  // a seed source for the random number engine
+std::mt19937 gen(rd()); // mersenne_twister_engine seeded with rd()
+std::uniform_int_distribution<> distrib(1, 255);
+
 using namespace nanogui;
+
 
 class ExampleApplication : public Screen {
 public:
+    void computeRandomTexture(){
+        for(auto j = 0; j!=tex_height*tex_width; ++j){
+            float grad = 255*float(j)/float(tex_height*tex_width);
+            m_textureBuffer[j*4] = grad;
+            m_textureBuffer[j*4+1] = grad;
+            m_textureBuffer[j*4+2] = grad;
+            m_textureBuffer[j*4+3] = distrib(gen);
+        }
+        m_texture->upload(m_textureBuffer);
+    }
+
     ExampleApplication()
     : Screen(Vector2i(1024, 768), "PoncaPlot"){
         inc_ref();
@@ -75,18 +91,9 @@ public:
                 Texture::InterpolationMode::Trilinear,
                 Texture::InterpolationMode::Nearest);
 
-        for(auto j = 0; j!=tex_height*tex_width; ++j){
-            float grad = 255*float(j)/float(tex_height*tex_width);
-            m_textureBuffer[j*4] = grad;
-            m_textureBuffer[j*4+1] = grad;
-            m_textureBuffer[j*4+2] = grad;
-            m_textureBuffer[j*4+3] = 255;
+        computeRandomTexture();
 
-        }
-
-        m_texture->upload(m_textureBuffer);
-
-        ImageView *image_view = new ImageView(window);
+        auto *image_view = new MyView(window);
         image_view->set_size(Vector2i(768,768));
         image_view->set_image( m_texture );
         image_view->center();
@@ -102,29 +109,21 @@ public:
             set_visible(false);
             return true;
         }
+        /// Update displayed image each time the user press space (to be removed)
+        if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
+            computeRandomTexture();
+        }
         return false;
     }
 
     virtual void draw(NVGcontext *ctx) {
-        /* Draw the user interface */
         Screen::draw(ctx);
     }
 
     virtual void draw_contents() {
         Screen::draw_contents();
-//        m_render_pass->resize(framebuffer_size());
-//        m_render_pass->begin();
-//
-//        m_shader->begin();
-//        m_shader->draw_array(Shader::PrimitiveType::Triangle, 0, 6, true);
-//        m_shader->end();
-//
-//        m_render_pass->end();
     }
 private:
-    ref<Shader> m_shader;
-    ref<RenderPass> m_render_pass;
-
     uint8_t*  m_textureBuffer {nullptr};
     Texture*  m_texture {nullptr};
 };
