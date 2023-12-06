@@ -25,6 +25,13 @@ MyView::isInsideImage(const Vector2f &lp) const {
 
 int
 MyView::findPointId(const Vector2f &lp, float epsilon) const{
+    int i = 0;
+    for(const auto&p : m_points)
+    {
+        if(norm((lp-p)) <= epsilon)
+            return i;
+        ++i;
+    }
     return -1;
 }
 
@@ -32,15 +39,21 @@ bool
 MyView::mouse_button_event(const Vector2i &p, int button, bool down, int modifiers)
 {
     auto lp = pos_to_pixel(p - m_pos);
-    if (isInsideImage(lp)) {
+    if (modifiers==0 && down && isInsideImage(lp)) {
 //        std::cout << "mouse_button_event: p=[" << pos_to_pixel(p - m_pos) << "], button=[" << button
 //        << "], isdown: " << down << std::endl;
         auto pointId = findPointId(lp);
-        if (pointId>=0) {
-            std::cout << "Point clicked: " << pointId << std::endl;
+        if (pointId < 0) { // create new point
+            std::cout << "MyView::add new point" << std::endl;
+            m_points.push_back( lp );
+            m_updateFunction();
+            return true;
+        } else {
+            m_movedPoint = pointId;
             return true;
         }
     }
+    m_movedPoint = -1;
     return ImageView::mouse_button_event(p, button, down, modifiers);
 }
 
@@ -53,16 +66,18 @@ MyView::mouse_drag_event(const nanogui::Vector2i &p, const nanogui::Vector2i &re
     auto lp = pos_to_pixel(p - m_pos);
     if (isInsideImage(lp))
     {
-        auto pointId = findPointId(lp);
-        if (pointId>=0) {
+        if (m_movedPoint>=0) {
             switch (button) {
                 case 1: //left click
                     // if is on a point
                     std::cout << "Move point by [" << rel << "]" << std::endl;
+                    m_points[m_movedPoint] = lp;
+                    m_updateFunction();
                     break;
                 case 2: //right click
                     // if is on a point
                     std::cout << "Change normal by [" << rel << "]" << std::endl;
+                    m_updateFunction();
                     break;
                 default:
                     break;

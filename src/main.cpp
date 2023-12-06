@@ -34,9 +34,9 @@
 
 #include <iostream>
 #include <memory>
-#include <random>
 
 #include "myview.h"
+#include "drawingPass.h"
 
 #define STB_IMAGE_STATIC
 #define STB_IMAGE_IMPLEMENTATION
@@ -50,26 +50,16 @@
 const int tex_width = 500;
 const int tex_height = 500;
 
-
-std::random_device rd;  // a seed source for the random number engine
-std::mt19937 gen(rd()); // mersenne_twister_engine seeded with rd()
-std::uniform_int_distribution<> distrib(1, 255);
-
 using namespace nanogui;
+
+MyView *image_view {nullptr};
+
 
 
 class ExampleApplication : public Screen {
 public:
-    void computeRandomTexture(){
-        for(auto j = 0; j!=tex_height*tex_width; ++j){
-            float grad = 255*float(j)/float(tex_height*tex_width);
-            m_textureBuffer[j*4] = grad;
-            m_textureBuffer[j*4+1] = grad;
-            m_textureBuffer[j*4+2] = grad;
-            m_textureBuffer[j*4+3] = distrib(gen);
-        }
-        m_texture->upload(m_textureBuffer);
-    }
+
+
 
     ExampleApplication()
     : Screen(Vector2i(1024, 768), "PoncaPlot"){
@@ -89,15 +79,24 @@ public:
                 Texture::ComponentFormat::UInt8,
                 {tex_width,tex_height},
                 Texture::InterpolationMode::Trilinear,
-                Texture::InterpolationMode::Nearest);
+                Texture::InterpolationMode::Nearest,
+                Texture::WrapMode::ClampToEdge,
+                1,
+                Texture::TextureFlags::ShaderRead,
+                true); // manual mipmap update
 
-        computeRandomTexture();
+        m_passes.clear();
+        m_passes.push_back( new FillPass( {0,0,0,255}));
+        m_passes.push_back( new DistanceField());
+        m_passes.push_back( new DisplayPoint({255,0,0,255}));
 
-        auto *image_view = new MyView(window);
+        image_view = new MyView(window);
         image_view->set_size(Vector2i(768,768));
         image_view->set_image( m_texture );
         image_view->center();
+        image_view->setUpdateFunction([this](){this->renderPasses();});
 
+        renderPasses();
 
         perform_layout();
     }
@@ -109,10 +108,6 @@ public:
             set_visible(false);
             return true;
         }
-        /// Update displayed image each time the user press space (to be removed)
-        if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
-            computeRandomTexture();
-        }
         return false;
     }
 
@@ -121,11 +116,26 @@ public:
     }
 
     virtual void draw_contents() {
+        if (m_needUpdate){
+            m_texture->upload(m_textureBuffer);
+            m_needUpdate = false;
+        }
         Screen::draw_contents();
+    }
+
+    void renderPasses() {
+        std::cout << "[Main] Update texture" << std::endl;
+        const auto& points = image_view->getPointCollection();
+        for (auto* p : m_passes) {
+            p->render(points, m_textureBuffer, tex_width, tex_height);
+        }
+        m_needUpdate = true;
     }
 private:
     uint8_t*  m_textureBuffer {nullptr};
     Texture*  m_texture {nullptr};
+    std::vector<DrawingPass*> m_passes;
+    bool m_needUpdate{false};
 };
 
 int main(int /* argc */, char ** /* argv */) {

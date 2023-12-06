@@ -53,6 +53,7 @@ endif()
 add_executable( poncaplot
         src/myview.h
         src/myview.cpp
+        src/drawingPass.h
                 src/main.cpp
                 )
 
