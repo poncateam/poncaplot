@@ -37,6 +37,7 @@
 
 #include "myview.h"
 #include "drawingPass.h"
+#include "drawingPasses/distanceField.h"
 
 #define STB_IMAGE_STATIC
 #define STB_IMAGE_IMPLEMENTATION
