@@ -19,7 +19,7 @@ public:
     bool isInsideImage(const nanogui::Vector2f &lp) const;
 
     // Check if a point is at this coordinate. If yes, return the point id, -1 otherwise
-    int findPointId(const nanogui::Vector2f &lp, float epsilon = 1.f) const;
+    int findPointId(const nanogui::Vector2f &lp, float epsilon = 3.f) const;
 
     // Widget implementation
     /// Handle a mouse button event
