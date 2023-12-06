@@ -5,7 +5,7 @@
 struct DistanceField : public DrawingPass {
     inline explicit DistanceField() : DrawingPass() {}
     void render(const MyView::PointCollection& points, uint8_t*buffer, int w, int h) override{
-        double normFactor (std::max(w,h)/2);
+        double normFactor (std::max(w,h));
         for (int j = 0; j < h; ++j ) {
             for (int i = 0; i < w; ++i) {
                 auto *b = buffer + (i + j * w) * 4;
