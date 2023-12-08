@@ -15,29 +15,18 @@
 #include <nanogui/screen.h>
 #include <nanogui/window.h>
 #include <nanogui/layout.h>
-#include <nanogui/label.h>
-#include <nanogui/checkbox.h>
-#include <nanogui/button.h>
-#include <nanogui/toolbutton.h>
 #include <nanogui/popupbutton.h>
-#include <nanogui/combobox.h>
-#include <nanogui/progressbar.h>
-#include <nanogui/icons.h>
-#include <nanogui/messagedialog.h>
-#include <nanogui/textbox.h>
-#include <nanogui/slider.h>
-#include <nanogui/imagepanel.h>
-#include <nanogui/vscrollpanel.h>
-#include <nanogui/graph.h>
-#include <nanogui/tabwidget.h>
 #include <nanogui/texture.h>
 
 #include <iostream>
 #include <memory>
+#include <thread>
 
 #include "myview.h"
 #include "drawingPass.h"
 #include "drawingPasses/distanceField.h"
+#include "drawingPasses/plane.h"
+
 
 #define STB_IMAGE_STATIC
 #define STB_IMAGE_IMPLEMENTATION
@@ -48,8 +37,8 @@
 #endif
 #include <stb_image.h>
 
-const int tex_width = 300;
-const int tex_height = 300;
+const int tex_width = 200;
+const int tex_height = 200;
 
 using namespace nanogui;
 
@@ -89,7 +78,8 @@ public:
         m_passes.clear();
         m_passes.push_back( new FillPass( {255,255,255,255}));
 //        m_passes.push_back( new DistanceField());
-        m_passes.push_back( new DistanceFieldWithKdTree()); // too slow
+//        m_passes.push_back( new DistanceFieldWithKdTree()); // too slow
+        m_passes.push_back( new PlaneFitField() );
         m_passes.push_back( new DisplayPoint({255,0,0,255}));
 
         image_view = new MyView(window);
@@ -97,7 +87,7 @@ public:
         image_view->set_image( m_texture );
         image_view->fitImage();
         image_view->center();
-        image_view->setUpdateFunction([this](){this->renderPasses();});
+        image_view->setUpdateFunction([this](){ this->renderPasses();});
 
         renderPasses();
 
@@ -115,7 +105,8 @@ public:
     }
 
     virtual void draw(NVGcontext *ctx) {
-        Screen::draw(ctx);
+//        if (m_needUpdate)
+            Screen::draw(ctx);
     }
 
     virtual void draw_contents() {
@@ -132,6 +123,7 @@ public:
         for (auto* p : m_passes) {
             p->render(points, m_textureBuffer, tex_width, tex_height);
         }
+
         m_needUpdate = true;
     }
 private:
@@ -150,7 +142,7 @@ int main(int /* argc */, char ** /* argv */) {
             app->dec_ref();
             app->draw_all();
             app->set_visible(true);
-            nanogui::mainloop(1 / 30.f * 1000);
+            nanogui::mainloop(1 / 10.f * 1000);
         }
 
         nanogui::shutdown();

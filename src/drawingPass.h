@@ -48,8 +48,10 @@ struct DisplayPoint : public DrawingPass {
         for (const auto&p : points.point_data()){
             int i (std::floor(p.pos().x()));
             int j (std::floor(p.pos().y()));
-            for (int u = -1; u <= 1; ++u ){
-                for (int v = -1; v <= 1; ++v ){
+//            for (int u = -1; u <= 1; ++u ){
+//                for (int v = -1; v <= 1; ++v ){
+                    for (int u = 0; u <= 0; ++u ){
+                        for (int v = 0; v <= 0; ++v ){
                     //this is suboptimal: we check multiple time, could be done better.
                     int ii = i+u;
                     int jj = j+v;
