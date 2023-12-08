@@ -23,6 +23,18 @@ MyView::isInsideImage(const Vector2f &lp) const {
     return true;
 }
 
+bool
+MyView::fitImage() {
+    if (!m_enabled || !m_image)
+        return false;
+
+    const auto iSize = Vector2f (m_image->size());
+    const auto wSize = Vector2f (size() );
+
+    m_scale = 5.f*std::min(wSize.x() / iSize.x(), wSize.y() / iSize.y());
+    return true;
+}
+
 //#define USE_KDTREE
 int
 MyView::findPointId(const Vector2f &lp, float epsilon) const{

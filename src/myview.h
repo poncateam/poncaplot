@@ -35,6 +35,9 @@ public:
     // Check if a point is inside the image
     bool isInsideImage(const nanogui::Vector2f &lp) const;
 
+    // Set zoom factor to make the image fit the window
+    bool fitImage();
+
     // Check if a point is at this coordinate. If yes, return the point id, -1 otherwise
     int findPointId(const nanogui::Vector2f &lp, float epsilon = 3.f) const;
 
@@ -44,6 +47,9 @@ public:
 
     /// Handle a mouse drag event
     bool mouse_drag_event(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button, int modifiers) override;
+
+    /// Disable scrolling
+    inline bool scroll_event(const nanogui::Vector2i &p, const nanogui::Vector2f &rel) override {return true;}
 
     /// Read access to point collection
     inline const PointCollection& getPointCollection() const { return m_tree; }

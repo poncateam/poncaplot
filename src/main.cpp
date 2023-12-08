@@ -48,8 +48,8 @@
 #endif
 #include <stb_image.h>
 
-const int tex_width = 500;
-const int tex_height = 500;
+const int tex_width = 300;
+const int tex_height = 300;
 
 using namespace nanogui;
 
@@ -87,14 +87,15 @@ public:
                 true); // manual mipmap update
 
         m_passes.clear();
-        m_passes.push_back( new FillPass( {0,0,0,255}));
-        m_passes.push_back( new DistanceField());
-//        m_passes.push_back( new DistanceFieldWithKdTree()); // too slow
+        m_passes.push_back( new FillPass( {255,255,255,255}));
+//        m_passes.push_back( new DistanceField());
+        m_passes.push_back( new DistanceFieldWithKdTree()); // too slow
         m_passes.push_back( new DisplayPoint({255,0,0,255}));
 
         image_view = new MyView(window);
         image_view->set_size(Vector2i(768,768));
         image_view->set_image( m_texture );
+        image_view->fitImage();
         image_view->center();
         image_view->setUpdateFunction([this](){this->renderPasses();});
 
@@ -149,7 +150,7 @@ int main(int /* argc */, char ** /* argv */) {
             app->dec_ref();
             app->draw_all();
             app->set_visible(true);
-            nanogui::mainloop(1 / 60.f * 1000);
+            nanogui::mainloop(1 / 30.f * 1000);
         }
 
         nanogui::shutdown();
