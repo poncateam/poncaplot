@@ -7,7 +7,8 @@ struct DistanceField : public DrawingPass {
     void render(const MyView::PointCollection& points, uint8_t*buffer, int w, int h) override{
         if(points.point_data().empty()) return;
 
-        double normFactor (std::max(w,h));
+        const double normFactor (std::max(w,h));
+#pragma omp parallel for collapse(2)
         for (int j = 0; j < h; ++j ) {
             for (int i = 0; i < w; ++i) {
                 auto *b = buffer + (i + j * w) * 4;
@@ -31,6 +32,7 @@ struct DistanceFieldWithKdTree : public DrawingPass {
         if(points.point_data().empty()) return;
 
         double normFactor (std::max(w,h));
+#pragma omp parallel for collapse(2)
         for (int j = 0; j < h; ++j ) {
             for (int i = 0; i < w; ++i) {
                 auto *b = buffer + (i + j * w) * 4;
