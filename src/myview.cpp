@@ -2,6 +2,11 @@
 
 #include <nanogui/texture.h>
 
+#ifndef M_PI
+// Source: http://www.geom.uiuc.edu/~huberty/math5337/groupe/digits.html
+#define M_PI 3.141592653589793238462643383279502884197169399375105820974944592307816406
+#endif
+
 using namespace nanogui;
 
 MyView::MyView(nanogui::Widget *parent) : ImageView(parent) {
@@ -68,7 +73,7 @@ MyView::mouse_button_event(const Vector2i &p, int button, bool down, int modifie
         auto pointId = findPointId(lp);
         if (pointId < 0) { // create new point
             std::cout << "MyView::add new point" << std::endl;
-            m_points.emplace_back( lp.x(), lp.y(), 0, 1 );
+            m_points.emplace_back( lp.x(), lp.y(),  M_PI/2.);
             updateCollection();
             return true;
         } else {
@@ -93,15 +98,19 @@ MyView::mouse_drag_event(const nanogui::Vector2i &p, const nanogui::Vector2i &re
             switch (button) {
                 case 1: //left click
                     // if is on a point
-                    std::cout << "Move point by [" << rel << "]" << std::endl;
+//                    std::cout << "Move point by [" << rel << "]" << std::endl;
                     m_points[m_movedPoint].x() = lp.x();
                     m_points[m_movedPoint].y() = lp.y();
                     updateCollection();
                     break;
                 case 2: //right click
+                {
                     // if is on a point
-                    std::cout << "Change normal by [" << rel << "]" << std::endl;
+                    auto relAngle = std::asin(float(rel.x()) / 40.f); // move by 40px to get 90degree angle
+                    m_points[m_movedPoint].z() += relAngle;
+//                    std::cout << "Change normal by " << rel << ". Gives angle " << m_points[m_movedPoint].z() << std::endl;
                     updateCollection();
+                }
                     break;
                 default:
                     break;

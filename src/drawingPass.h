@@ -1,6 +1,7 @@
 #pragma once
 
 #include <random>
+#include <iostream>
 
 #include "myview.h"
 
@@ -55,7 +56,7 @@ struct DisplayPoint : public DrawingPass {
         for (int pid = 0; pid< points.point_count(); ++pid){
             const auto& p = points.point_data()[pid];
             // Build vector that is orthogonal to the normal vector
-            const VectorType& tangent {p.normal().y(), p.normal().x()};
+            const VectorType& tangent {p.normal().y(), -p.normal().x()};
             int i (std::floor(p.pos().x()));
             int j (std::floor(p.pos().y()));
             for (int u = std::floor(-pLargeSize); u <= int(std::ceil(pLargeSize)); ++u ){
@@ -66,7 +67,10 @@ struct DisplayPoint : public DrawingPass {
                         int jj = j + v;
                         if (j >= 0 && j < h) {
                             bool draw = (localPos.squaredNorm() < m_halfSize * m_halfSize)  // draw point
-                                    ||  (std::abs(localPos.dot(tangent)) < 2 && localPos.dot(p.normal())>0.f) // draw normal
+                                    ||  ((localPos.squaredNorm() < pLargeSize * pLargeSize)
+                                         && (localPos.dot(p.normal()) > 0.f)
+                                         && (std::abs(localPos.dot(tangent)) < 2)
+                                         ) // draw normal
                                     ;
                             if (draw) {
                                 auto *b = buffer + (ii + jj * w) * 4;
