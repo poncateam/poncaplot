@@ -38,7 +38,7 @@ struct FitField : public DrawingPass {
                     if (dist * dist < 1.4)
                         b[0] = b[1] = b[2] = 255;
                     else {
-                        auto col = uint(255. * dist / m_scale);
+                        auto col = int(255. * dist / m_scale);
                         if (dist > 0)
                             b[0] = b[1] = b[2] = col;
                         else {
