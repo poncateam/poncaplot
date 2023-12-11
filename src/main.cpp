@@ -14,9 +14,9 @@
 #include <nanogui/opengl.h>
 #include <nanogui/screen.h>
 #include <nanogui/window.h>
+#include <nanogui/combobox.h>
+#include <nanogui/label.h>
 #include <nanogui/layout.h>
-#include <nanogui/popupbutton.h>
-#include <nanogui/texture.h>
 
 #include <iostream>
 #include <memory>
@@ -37,8 +37,8 @@
 #endif
 #include <stb_image.h>
 
-const int tex_width = 200;
-const int tex_height = 200;
+const int tex_width = 500;
+const int tex_height = 500;
 
 using namespace nanogui;
 
@@ -58,8 +58,31 @@ public:
         window->set_position(Vector2i(0, 0));
         window->set_layout(new GroupLayout());
 
+
+        new nanogui::Label(window, "Select Fit Type", "sans-bold");
+        ComboBox *combo =new nanogui::ComboBox(window, { "Distance Field", "PlaneFit"});
+
+        // TODO
+        // create pass 1 interface
+        // create configurable pass placeholder
+        // create pass 3 interface
+
+        combo->set_callback([this](int id){
+            delete (m_passes[1]);
+            m_passes[1] = nullptr;
+            switch (id) {
+                case 0: m_passes[1] = new DistanceFieldWithKdTree(); break;
+                case 1: m_passes[1] = new PlaneFitField(); break;
+                default: throw std::runtime_error("Unknown Field type!");
+            }
+            buildPassInterface(id);
+            renderPasses();
+        });
+
+
+
         window = new Window(this, "Image");
-        window->set_position(Vector2i(100, 0));
+        window->set_position(Vector2i(200, 0));
         window->set_size(Vector2i(768,768));
         window->set_layout(new GroupLayout(3));
 
@@ -75,12 +98,9 @@ public:
                 Texture::TextureFlags::ShaderRead,
                 true); // manual mipmap update
 
-        m_passes.clear();
-        m_passes.push_back( new FillPass( {255,255,255,255}));
-//        m_passes.push_back( new DistanceField());
-//        m_passes.push_back( new DistanceFieldWithKdTree()); // too slow
-        m_passes.push_back( new PlaneFitField() );
-        m_passes.push_back( new DisplayPoint({255,0,0,255}));
+        m_passes[0] = new FillPass( {255,255,255,255});
+        m_passes[1] = new DistanceFieldWithKdTree();
+        m_passes[2] = new DisplayPoint({255,0,0,255});
 
         image_view = new MyView(window);
         image_view->set_size(Vector2i(768,768));
@@ -117,6 +137,10 @@ public:
         Screen::draw_contents();
     }
 
+    void buildPassInterface(int id){
+
+    }
+
     void renderPasses() {
         std::cout << "[Main] Update texture" << std::endl;
         const auto& points = image_view->getPointCollection();
@@ -129,7 +153,7 @@ public:
 private:
     uint8_t*  m_textureBuffer {nullptr};
     Texture*  m_texture {nullptr};
-    std::vector<DrawingPass*> m_passes;
+    std::array<DrawingPass*,3> m_passes;
     bool m_needUpdate{false};
 };
 

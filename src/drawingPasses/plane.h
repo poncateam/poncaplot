@@ -31,12 +31,17 @@ struct PlaneFitField : public DrawingPass {
                 // Fit plane (method compute handles multipass fitting
                 if( fit.computeWithIds(points.range_neighbors( query, scale ), points.point_data() ) == Ponca::STABLE ){
                     float dist = fit.potential(query);
-                    auto col = uint (255. * dist / normFactor);
-                    if (dist > 0)
-                        b[0] = b[1] = b[2] = col;
-                    else {
-                        b[0] = - col;
-                        b[1] = b[2] = 0;
+                    if (dist*dist < 1.4)
+                        b[0] = b[1] = b[2] = 255;
+                    else
+                    {
+                        auto col = uint (255. * dist / normFactor);
+                        if (dist > 0)
+                            b[0] = b[1] = b[2] = col;
+                        else {
+                            b[0] = - col;
+                            b[1] = b[2] = 0;
+                        }
                     }
                     b[3] = 255;
                 }
