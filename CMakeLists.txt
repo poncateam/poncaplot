@@ -51,13 +51,19 @@ endif()
 
 # Create an executable
 add_executable( poncaplot
+        src/myview.h
+        src/myview.cpp
+        src/drawingPass.h
+        src/drawingPasses/distanceField.h
+        src/drawingPasses/poncaFitField.h
                 src/main.cpp
                 )
 
 # Include settings
 target_include_directories(poncaplot PUBLIC
                             "${CMAKE_CURRENT_SOURCE_DIR}/external/nanogui/include"
-                            "${CMAKE_CURRENT_SOURCE_DIR}/external/ponca/")
+                            "${CMAKE_CURRENT_SOURCE_DIR}/external/ponca/"
+                            "${CMAKE_CURRENT_SOURCE_DIR}/src/")
 
 # Link settings
 target_link_libraries(poncaplot nanogui ${Eigen_Deps} ${OpenMP_link_libraries})
