@@ -19,7 +19,7 @@ struct DistanceField : public DrawingPass {
                     auto dist = int(std::sqrt((i-u)*(i-u) + (j-v)*(j-v)));
                     minDist = std::min(dist, minDist);
                 }
-                auto col = uint (255. * minDist / normFactor);
+                auto col = int(255. * minDist / normFactor);
                 b[0] = b[1] = b[2] = col;
                 b[3] = 255;
             }
@@ -41,7 +41,7 @@ struct DistanceFieldWithKdTree : public DrawingPass {
                 if(res.begin()!=res.end()) {
                     auto nei = points.point_data()[res.get()].pos();
                     float dist = (nei-query).norm();
-                    auto col = uint (255. * dist / normFactor);
+                    auto col = int (255. * dist / normFactor);
                     b[0] = b[1] = b[2] = col;
                     b[3] = 255;
                 }
