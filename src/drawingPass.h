@@ -49,22 +49,32 @@ struct DisplayPoint : public DrawingPass {
     inline explicit DisplayPoint(const nanogui::Vector4i &pointColor = {0,0,0,255})
             : DrawingPass(), m_pointColor(pointColor) {}
     void render(const MyView::PointCollection& points, uint8_t*buffer, int w, int h) override{
-#pragma omp parallel for default(none) shared(points, buffer, w, h)
+        using VectorType = typename MyView::PointCollection::VectorType;
+        const auto pLargeSize = 2.f*m_halfSize;
+#pragma omp parallel for default(none) shared(points, buffer, w, h,pLargeSize)
         for (int pid = 0; pid< points.point_count(); ++pid){
             const auto& p = points.point_data()[pid];
+            // Build vector that is orthogonal to the normal vector
+            const VectorType& tangent {p.normal().y(), p.normal().x()};
             int i (std::floor(p.pos().x()));
             int j (std::floor(p.pos().y()));
-            for (int u = -m_halfSize; u <= m_halfSize; ++u ){
+            for (int u = std::floor(-pLargeSize); u <= int(std::ceil(pLargeSize)); ++u ){
                 int ii = i+u;
                 if(ii>=0 && ii<w){
-                    for (int v = -m_halfSize; v <= m_halfSize; ++v ) {
+                    for (int v = std::floor(-pLargeSize); v <= int(std::ceil(pLargeSize)); ++v ) {
+                        VectorType localPos {u,v};
                         int jj = j + v;
                         if (j >= 0 && j < h) {
-                            auto *b = buffer + (ii + jj * w) * 4;
-                            b[0] = m_pointColor[0];
-                            b[1] = m_pointColor[1];
-                            b[2] = m_pointColor[2];
-                            b[3] = m_pointColor[3];
+                            bool draw = (localPos.squaredNorm() < m_halfSize * m_halfSize)  // draw point
+                                    ||  (std::abs(localPos.dot(tangent)) < 2 && localPos.dot(p.normal())>0.f) // draw normal
+                                    ;
+                            if (draw) {
+                                auto *b = buffer + (ii + jj * w) * 4;
+                                b[0] = m_pointColor[0];
+                                b[1] = m_pointColor[1];
+                                b[2] = m_pointColor[2];
+                                b[3] = m_pointColor[3];
+                            }
                         }
                     }
                 }
@@ -72,5 +82,5 @@ struct DisplayPoint : public DrawingPass {
         }
     }
     nanogui::Vector4i m_pointColor;
-    int m_halfSize{1};
+    float m_halfSize{1.f};
 };
