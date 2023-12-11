@@ -16,7 +16,7 @@ struct FillPass : public DrawingPass {
             : m_fillColor(fillColor) {}
     void render(const MyView::PointCollection& /*points*/, uint8_t*buffer, int w, int h) override{
 #pragma omp parallel for default(none) shared(buffer, w, h)
-        for(auto j = 0; j!=w*h; ++j){
+        for(auto j = 0; j<w*h; ++j){
             buffer[j*4] = m_fillColor.x();
             buffer[j*4+1] = m_fillColor.y();
             buffer[j*4+2] = m_fillColor.z();
@@ -30,7 +30,7 @@ struct RandomPass : public DrawingPass {
     inline explicit RandomPass() : DrawingPass(), gen(rd()) {}
     void render(const MyView::PointCollection& /*points*/, uint8_t*buffer, int w, int h) override{
 #pragma omp parallel for default(none) shared(buffer, w, h)
-        for(auto j = 0; j!=w*h; ++j){
+        for(auto j = 0; j<w*h; ++j){
             float grad = 255*float(j)/float(w*h);
             buffer[j*4] = grad;
             buffer[j*4+1] = grad;
@@ -50,7 +50,8 @@ struct DisplayPoint : public DrawingPass {
             : DrawingPass(), m_pointColor(pointColor) {}
     void render(const MyView::PointCollection& points, uint8_t*buffer, int w, int h) override{
 #pragma omp parallel for default(none) shared(points, buffer, w, h)
-        for (const auto&p : points.point_data()){
+        for (int pid = 0; pid< points.point_count(); ++pid){
+            const auto& p = points.point_data()[pid];
             int i (std::floor(p.pos().x()));
             int j (std::floor(p.pos().y()));
             for (int u = -m_halfSize; u <= m_halfSize; ++u ){

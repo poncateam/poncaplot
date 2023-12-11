@@ -55,7 +55,7 @@ add_executable( poncaplot
         src/myview.cpp
         src/drawingPass.h
         src/drawingPasses/distanceField.h
-        src/drawingPasses/plane.h
+        src/drawingPasses/poncaFitField.h
                 src/main.cpp
                 )
 

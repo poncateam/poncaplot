@@ -4,15 +4,15 @@
 
 struct DistanceField : public DrawingPass {
     inline explicit DistanceField() : DrawingPass() {}
-    void render(const MyView::PointCollection& points, uint8_t*buffer, int w, int h) override{
+    void render(const MyView::PointCollection& points, uint8_t*buffer, int w, int h) override {
         if(points.point_data().empty()) return;
 
-        const double normFactor (std::max(w,h));
-#pragma omp parallel for collapse(2)
+        const auto normFactor = float(std::max(w,h));
+#pragma omp parallel for collapse(2) default(none) shared(normFactor, points, buffer, w, h)
         for (int j = 0; j < h; ++j ) {
             for (int i = 0; i < w; ++i) {
                 auto *b = buffer + (i + j * w) * 4;
-                int minDist = normFactor; //distance should necessarily be smaller
+                auto minDist = int(normFactor); //distance should necessarily be smaller
                 for (const auto &p : points.point_data()) {
                     int u(std::floor(p.pos().x()));
                     int v(std::floor(p.pos().y()));
@@ -31,8 +31,8 @@ struct DistanceFieldWithKdTree : public DrawingPass {
     void render(const MyView::PointCollection& points, uint8_t*buffer, int w, int h) override{
         if(points.point_data().empty()) return;
 
-        double normFactor (std::max(w,h));
-#pragma omp parallel for collapse(2)
+        const auto normFactor = float(std::max(w,h));
+#pragma omp parallel for collapse(2) default(none) shared(normFactor, points, buffer, w, h)
         for (int j = 0; j < h; ++j ) {
             for (int i = 0; i < w; ++i) {
                 auto *b = buffer + (i + j * w) * 4;
