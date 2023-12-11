@@ -14,9 +14,12 @@
 #include <nanogui/opengl.h>
 #include <nanogui/screen.h>
 #include <nanogui/window.h>
+#include <nanogui/colorpicker.h>
 #include <nanogui/combobox.h>
 #include <nanogui/label.h>
 #include <nanogui/layout.h>
+#include <nanogui/slider.h>
+#include <nanogui/textbox.h>
 
 #include <iostream>
 #include <memory>
@@ -53,6 +56,11 @@ public:
 
     ExampleApplication()
     : Screen(Vector2i(1024, 768), "PoncaPlot"){
+
+        m_passes[0] = new FillPass( {255,255,255,255});
+        m_passes[1] = new DistanceFieldWithKdTree();
+        m_passes[2] = new DisplayPoint({255,0,0,255});
+
         inc_ref();
         auto *window = new Window(this, "Controls");
         window->set_position(Vector2i(0, 0));
@@ -60,13 +68,7 @@ public:
 
 
         new nanogui::Label(window, "Select Fit Type", "sans-bold");
-        ComboBox *combo =new nanogui::ComboBox(window, { "Distance Field", "PlaneFit"});
-
-        // TODO
-        // create pass 1 interface
-        // create configurable pass placeholder
-        // create pass 3 interface
-
+        auto combo =new nanogui::ComboBox(window, { "Distance Field", "PlaneFit"});
         combo->set_callback([this](int id){
             delete (m_passes[1]);
             m_passes[1] = nullptr;
@@ -80,6 +82,56 @@ public:
         });
 
 
+        // create pass 1 interface
+        {
+            pass1Widget = new nanogui::Widget(window);
+            pass1Widget->set_layout(new GroupLayout());
+            new nanogui::Label(pass1Widget, "Background filling", "sans-bold");
+            new nanogui::Label(pass1Widget, "Color");
+            // dunno why, but sets colorpicker in range [0-255], but reads in [0-1]
+            auto cp = new ColorPicker(pass1Widget, (dynamic_cast<FillPass *>(m_passes[0]))->m_fillColor);
+            cp->set_final_callback([this](const Color &c) {
+                dynamic_cast<FillPass *>(m_passes[0])->m_fillColor = 255.f * c;
+                renderPasses();
+            });
+        }
+
+        // create configurable passes interface
+        {
+            pass2WidgetDistanceField = new nanogui::Widget(window);
+            pass2WidgetDistanceField->set_layout(new GroupLayout());
+            new nanogui::Label(pass2WidgetDistanceField, "Distance Field", "sans-bold");
+            new nanogui::Label(pass2WidgetDistanceField, "Test 2");
+        }
+
+        // create configurable passes interface
+        {
+            pass2WidgetPlane = new nanogui::Widget(window);
+            pass2WidgetPlane->set_layout(new GroupLayout());
+            new nanogui::Label(pass2WidgetPlane, "Plane fitting", "sans-bold");
+            new nanogui::Label(pass2WidgetPlane, "Test 2");
+        }
+
+        // create pass 3 interface
+        {
+            pass3Widget = new nanogui::Widget(window);
+            pass3Widget->set_layout(new GroupLayout());
+            new nanogui::Label(pass3Widget, "Points Display", "sans-bold");
+            new nanogui::Label(pass1Widget, "Color");
+            // dunno why, but sets colorpicker in range [0-255], but reads in [0-1]
+            auto cp = new ColorPicker(pass1Widget, (dynamic_cast<DisplayPoint *>(m_passes[2]))->m_pointColor);
+            cp->set_final_callback([this](const Color &c) {
+                dynamic_cast<DisplayPoint *>(m_passes[2])->m_pointColor = 255.f * c;
+                renderPasses();
+            });
+            auto slider = new Slider(pass3Widget);
+            slider->set_value(dynamic_cast<DisplayPoint *>(m_passes[2])->m_halfSize);
+            slider->set_range({1,20});
+            slider->set_callback([&](float value) {
+                dynamic_cast<DisplayPoint *>(m_passes[2])->m_halfSize = int(value);
+                renderPasses();
+            });
+        }
 
         window = new Window(this, "Image");
         window->set_position(Vector2i(200, 0));
@@ -96,11 +148,7 @@ public:
                 Texture::WrapMode::ClampToEdge,
                 1,
                 Texture::TextureFlags::ShaderRead,
-                true); // manual mipmap update
-
-        m_passes[0] = new FillPass( {255,255,255,255});
-        m_passes[1] = new DistanceFieldWithKdTree();
-        m_passes[2] = new DisplayPoint({255,0,0,255});
+                false); // manual mipmap update
 
         image_view = new MyView(window);
         image_view->set_size(Vector2i(768,768));
@@ -111,7 +159,8 @@ public:
 
         renderPasses();
 
-        perform_layout();
+        // call perform_layout
+        buildPassInterface(0);
     }
 
     virtual bool keyboard_event(int key, int scancode, int action, int modifiers) {
@@ -138,7 +187,18 @@ public:
     }
 
     void buildPassInterface(int id){
-
+        switch (id) {
+            case 0:
+                pass2WidgetDistanceField->set_visible(true);
+                pass2WidgetPlane->set_visible(false);
+                break;
+            case 1:
+                pass2WidgetDistanceField->set_visible(false);
+                pass2WidgetPlane->set_visible(true);
+                break;
+            default: throw std::runtime_error("Unknown Field type!");
+        }
+        perform_layout();
     }
 
     void renderPasses() {
@@ -155,6 +215,7 @@ private:
     Texture*  m_texture {nullptr};
     std::array<DrawingPass*,3> m_passes;
     bool m_needUpdate{false};
+    Widget* pass1Widget, *pass2WidgetDistanceField, *pass2WidgetPlane, *pass3Widget;
 };
 
 int main(int /* argc */, char ** /* argv */) {
