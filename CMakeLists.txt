@@ -53,11 +53,13 @@ endif()
 add_executable( poncaplot
         src/myview.h
         src/myview.cpp
+        src/application.h
+        src/application.cpp
         src/drawingPass.h
         src/drawingPasses/distanceField.h
         src/drawingPasses/poncaFitField.h
                 src/main.cpp
-                )
+)
 
 # Include settings
 target_include_directories(poncaplot PUBLIC
