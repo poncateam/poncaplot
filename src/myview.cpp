@@ -67,19 +67,21 @@ bool
 MyView::mouse_button_event(const Vector2i &p, int button, bool down, int modifiers)
 {
     auto lp = pos_to_pixel(p - m_pos);
+    // left click, no modifier, on press
     if (modifiers==0 && down && isInsideImage(lp)) {
 //        std::cout << "mouse_button_event: p=[" << pos_to_pixel(p - m_pos) << "], button=[" << button
 //        << "], isdown: " << down << std::endl;
         auto pointId = findPointId(lp);
-        if (pointId < 0) { // create new point
-            std::cout << "MyView::add new point" << std::endl;
-            m_points.emplace_back( lp.x(), lp.y(),  M_PI/2.);
-            updateCollection();
-            return true;
+        if (pointId < 0) {
+            if(button == 0) { // create new point iif left click (button id seems to be different wrt drag event
+                std::cout << "MyView::add new point" << std::endl;
+                m_points.emplace_back(lp.x(), lp.y(), M_PI / 2.);
+                updateCollection();
+            }
         } else {
             m_movedPoint = pointId;
-            return true;
         }
+        return true;
     }
     m_movedPoint = -1;
     return ImageView::mouse_button_event(p, button, down, modifiers);
@@ -105,8 +107,10 @@ MyView::mouse_drag_event(const nanogui::Vector2i &p, const nanogui::Vector2i &re
                     break;
                 case 2: //right click
                 {
+                    int dist = std::min(std::abs(rel.x()), 50);
+                    if (rel.x() < 0) dist *=-1;
                     // if is on a point
-                    auto relAngle = std::asin(float(rel.x()) / 40.f); // move by 40px to get 90degree angle
+                    auto relAngle = std::asin(float(dist) / 50.1f); // move by 40px to get 90 degree angle
                     m_points[m_movedPoint].z() += relAngle;
 //                    std::cout << "Change normal by " << rel << ". Gives angle " << m_points[m_movedPoint].z() << std::endl;
                     updateCollection();
