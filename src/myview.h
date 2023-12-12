@@ -20,9 +20,7 @@ public:
     [[nodiscard]] inline const auto& normal() const {return m_normal;}
     /// \fixme Use maps to avoid duplication
     explicit inline DataPoint(const nanogui::Vector3f &pn)
-    : m_pos({pn.x(), pn.y()}), m_normal({std::cos(pn.z()), std::sin(pn.z())}) {
-        std::cout << m_normal.transpose() << std::endl;
-    }
+    : m_pos({pn.x(), pn.y()}), m_normal({std::cos(pn.z()), std::sin(pn.z())}) {}
 private:
     VectorType m_pos, m_normal;
 };
@@ -42,7 +40,8 @@ public:
     bool fitImage();
 
     // Check if a point is at this coordinate. If yes, return the point id, -1 otherwise
-    int findPointId(const nanogui::Vector2f &lp, float epsilon = 3.f) const;
+    // \see m_selectionThreshold
+    int findPointId(const nanogui::Vector2f &lp) const;
 
     // Widget implementation
     /// Handle a mouse button event
@@ -60,6 +59,9 @@ public:
     /// Set Update function, called after each point update
     inline void setUpdateFunction(std::function<void()> &&f) { m_updateFunction = f; }
 
+    /// Set selection threshold
+    inline void setSelectionThreshold(float dist) { m_selectionThreshold = dist; }
+
 private:
     inline void updateCollection();
 
@@ -68,4 +70,5 @@ private:
     PointCollection m_tree;
     std::function<void()> m_updateFunction {[](){}};
     int m_movedPoint{-1};
+    float m_selectionThreshold{2}; // distance in pixel used to select points
 };
