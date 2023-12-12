@@ -57,36 +57,11 @@ private:
         {                                                                              \
         FitWidget = new nanogui::Widget(window);                                       \
         FitWidget->set_layout(new GroupLayout());                                      \
-        new nanogui::Label(FitWidget, name, "sans-bold");                              \
-        new nanogui::Label(FitWidget, "Scale");                                        \
-        auto slider = new Slider(FitWidget);                                           \
-        slider->set_value(fit->m_scale);                                               \
-        slider->set_range({5,100});                                                    \
-        slider->set_callback([&](float value) {                                        \
-            fit->m_scale = value;                                                      \
-            std::cout<< "Set scale to " << value << std::endl;                         \
-            renderPasses();                                                            \
-        });                                                                            \
-        /* Positive integer widget */                                                  \
-        new Label(FitWidget, "MLS Iterations :", "sans-bold");                         \
-        auto int_box = new IntBox<int>(FitWidget, fit->m_iter);                        \
-        int_box->set_editable(true);                                                   \
-        int_box->set_spinnable(true);                                                  \
-        int_box->set_min_value(1);                                                     \
-        int_box->set_max_value(10);                                                    \
-        int_box->set_value_increment(1);                                               \
-        int_box->set_callback([&](int value) {                                         \
-            fit->m_iter = value;                                                       \
-            renderPasses();                                                            \
-        });                                                                            \
         }
 
 
 
 public:
-
-
-
     ExampleApplication()
     : Screen(Vector2i(1024, 768), "PoncaPlot"){
 
@@ -149,6 +124,38 @@ public:
             new nanogui::Label(distanceFieldWidget, "no parameter available");
         }
 
+        {
+            genericFitWidget = new nanogui::Widget(window);
+            genericFitWidget->set_layout(new GroupLayout());
+            new nanogui::Label(genericFitWidget, "Local Fitting", "sans-bold");
+            new nanogui::Label(genericFitWidget, "Scale");
+            auto slider = new Slider(genericFitWidget);
+            slider->set_value(passPlaneFit->m_scale); // init with plane, but sync with current.
+            slider->set_range({5,200});
+            slider->set_callback([&](float value) {
+                passPlaneFit->m_scale = value;
+                passSphereFit->m_scale = value;
+                passOrientedSphereFit->m_scale = value;
+                passUnorientedSphereFit->m_scale = value;
+                renderPasses();
+            });
+
+            new Label(genericFitWidget, "MLS Iterations :", "sans-bold");
+            auto int_box = new IntBox<int>(genericFitWidget, passPlaneFit->m_iter);
+            int_box->set_editable(true);
+            int_box->set_spinnable(true);
+            int_box->set_min_value(1);
+            int_box->set_max_value(10);
+            int_box->set_value_increment(1);
+            int_box->set_callback([&](int value) {
+                passPlaneFit->m_iter = value;
+                passSphereFit->m_iter = value;
+                passOrientedSphereFit->m_iter = value;
+                passUnorientedSphereFit->m_iter = value;
+                renderPasses();
+            });
+        }
+
         CONFIG_PONCA_FIT_INTERFACE(planeFitWidget,passPlaneFit,combo->items()[1])
         CONFIG_PONCA_FIT_INTERFACE(sphereFitWidget,passSphereFit,combo->items()[2])
         CONFIG_PONCA_FIT_INTERFACE(orientedSphereFitWidget,passOrientedSphereFit,combo->items()[3])
@@ -205,7 +212,7 @@ public:
         buildPassInterface(0);
     }
 
-    virtual bool keyboard_event(int key, int scancode, int action, int modifiers) {
+     bool keyboard_event(int key, int scancode, int action, int modifiers) override {
         if (Screen::keyboard_event(key, scancode, action, modifiers))
             return true;
         if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
@@ -215,12 +222,12 @@ public:
         return false;
     }
 
-    virtual void draw(NVGcontext *ctx) {
+     void draw(NVGcontext *ctx) override {
 //        if (m_needUpdate)
             Screen::draw(ctx);
     }
 
-    virtual void draw_contents() {
+     void draw_contents() override {
         if (m_needUpdate){
             m_texture->upload(m_textureBuffer);
             m_needUpdate = false;
@@ -230,6 +237,7 @@ public:
 
     void buildPassInterface(int id){
         distanceFieldWidget->set_visible(false);
+        genericFitWidget->set_visible(false);
         planeFitWidget->set_visible(false);
         sphereFitWidget->set_visible(false);
         orientedSphereFitWidget->set_visible(false);
@@ -239,15 +247,19 @@ public:
                 distanceFieldWidget->set_visible(true);
                 break;
             case 1:
+                genericFitWidget->set_visible(true);
                 planeFitWidget->set_visible(true);
                 break;
             case 2:
+                genericFitWidget->set_visible(true);
                 sphereFitWidget->set_visible(true);
                 break;
             case 3:
+                genericFitWidget->set_visible(true);
                 orientedSphereFitWidget->set_visible(true);
                 break;
             case 4:
+                genericFitWidget->set_visible(true);
                 unorientedSphereFitWidget->set_visible(true);
                 break;
             default: throw std::runtime_error("Unknown Field type!");
@@ -269,7 +281,10 @@ private:
     Texture*  m_texture {nullptr};
     std::array<DrawingPass*,3> m_passes;
     bool m_needUpdate{false};
-    Widget* pass1Widget, *distanceFieldWidget, *planeFitWidget, *sphereFitWidget, *orientedSphereFitWidget, *unorientedSphereFitWidget, *pass3Widget;
+    Widget* pass1Widget, *distanceFieldWidget,
+                         *genericFitWidget,    //< parameters applicable to all fitting techniques
+                         *planeFitWidget, *sphereFitWidget, *orientedSphereFitWidget, *unorientedSphereFitWidget,
+                         *pass3Widget;
     DistanceFieldWithKdTree *passDFWithKdTree;
     PlaneFitField *passPlaneFit;
     SphereFitField *passSphereFit;

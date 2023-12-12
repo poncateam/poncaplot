@@ -3,9 +3,17 @@
 
 #include <Ponca/Fitting>
 
+struct BaseFitField : public DrawingPass{
+    inline explicit BaseFitField() : DrawingPass() {}
+    ~BaseFitField() override = default;
+    float m_scale {20.f};
+    int   m_iter  {1};
+};
+
 template <typename _FitType>
-struct FitField : public DrawingPass {
-    inline explicit FitField() : DrawingPass() {}
+struct FitField : public BaseFitField {
+    inline explicit FitField() : BaseFitField() {}
+    ~FitField() override = default;
 
     using FitType = _FitType;
     using WeightFunc = typename FitType::WeightFunction;
@@ -51,9 +59,6 @@ struct FitField : public DrawingPass {
             }
         }
     }
-
-    float m_scale {20.f};
-    int   m_iter  {1};
 };
 
 using PointType  = typename MyView::PointCollection::DataPoint;
