@@ -20,9 +20,7 @@ public:
     [[nodiscard]] inline const auto& normal() const {return m_normal;}
     /// \fixme Use maps to avoid duplication
     explicit inline DataPoint(const nanogui::Vector3f &pn)
-    : m_pos({pn.x(), pn.y()}), m_normal({std::cos(pn.z()), std::sin(pn.z())}) {
-        std::cout << m_normal.transpose() << std::endl;
-    }
+    : m_pos({pn.x(), pn.y()}), m_normal({std::cos(pn.z()), std::sin(pn.z())}) {}
 private:
     VectorType m_pos, m_normal;
 };
