@@ -187,7 +187,8 @@ public:
         window->set_size(Vector2i(768,768));
         window->set_layout(new GroupLayout(3));
 
-        m_textureBuffer = new uint8_t [tex_width*tex_height];
+        m_textureBufferPing = new uint8_t [tex_width * tex_height];
+        m_textureBufferPong = new uint8_t [tex_width * tex_height];
         m_texture = new Texture(
                 Texture::PixelFormat::RGBA,
                 Texture::ComponentFormat::UInt8,
@@ -206,6 +207,7 @@ public:
         image_view->center();
         image_view->setUpdateFunction([this](){ this->renderPasses();});
 
+        renderPasses(); // render twice to fill m_textureBufferPing and m_textureBufferPong
         renderPasses();
 
         // call perform_layout
@@ -229,7 +231,7 @@ public:
 
      void draw_contents() override {
         if (m_needUpdate){
-            m_texture->upload(m_textureBuffer);
+            m_texture->upload(m_computeInPing ? m_textureBufferPong : m_textureBufferPing);
             m_needUpdate = false;
         }
         Screen::draw_contents();
@@ -271,15 +273,17 @@ public:
         std::cout << "[Main] Update texture" << std::endl;
         const auto& points = image_view->getPointCollection();
         for (auto* p : m_passes) {
-            p->render(points, m_textureBuffer, tex_width, tex_height);
+            p->render(points, m_computeInPing ? m_textureBufferPing : m_textureBufferPong, tex_width, tex_height);
         }
 
+        m_computeInPing = ! m_computeInPing;
         m_needUpdate = true;
     }
 private:
-    uint8_t*  m_textureBuffer {nullptr};
+    uint8_t*  m_textureBufferPing {nullptr}, *  m_textureBufferPong {nullptr};
+    bool m_computeInPing{true};
     Texture*  m_texture {nullptr};
-    std::array<DrawingPass*,3> m_passes;
+    std::array<DrawingPass*,3> m_passes{nullptr, nullptr, nullptr};
     bool m_needUpdate{false};
     Widget* pass1Widget, *distanceFieldWidget,
                          *genericFitWidget,    //< parameters applicable to all fitting techniques
