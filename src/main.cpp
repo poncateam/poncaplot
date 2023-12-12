@@ -187,18 +187,15 @@ public:
         window->set_size(Vector2i(768,768));
         window->set_layout(new GroupLayout(3));
 
-        m_textureBufferPing = new uint8_t [tex_width * tex_height];
-        m_textureBufferPong = new uint8_t [tex_width * tex_height];
+        m_textureBufferPing = new uint8_t [tex_width * tex_height * 4]; // use UInt8 RGBA textures
+        m_textureBufferPong = new uint8_t [tex_width * tex_height * 4]; // use UInt8 RGBA textures
         m_texture = new Texture(
                 Texture::PixelFormat::RGBA,
                 Texture::ComponentFormat::UInt8,
                 {tex_width,tex_height},
                 Texture::InterpolationMode::Trilinear,
                 Texture::InterpolationMode::Nearest,
-                Texture::WrapMode::ClampToEdge,
-                1,
-                Texture::TextureFlags::ShaderRead,
-                false); // manual mipmap update
+                Texture::WrapMode::ClampToEdge);
 
         image_view = new MyView(window);
         image_view->set_size(Vector2i(768,768));
