@@ -178,6 +178,7 @@ public:
             slider->set_range({1,20});
             slider->set_callback([&](float value) {
                 dynamic_cast<DisplayPoint *>(m_passes[2])->m_halfSize = int(value);
+                image_view->setSelectionThreshold(value);
                 renderPasses();
             });
         }

@@ -42,13 +42,13 @@ MyView::fitImage() {
 
 //#define USE_KDTREE
 int
-MyView::findPointId(const Vector2f &lp, float epsilon) const{
+MyView::findPointId(const Vector2f &lp) const{
     if(! m_points.empty()) {
         int i = 0;
 #ifndef USE_KDTREE
         for(const auto&p : m_points) {
             Vector2f query(p.x(), p.y());
-            if (norm((lp - query)) <= epsilon)
+            if (norm((lp - query)) <= m_selectionThreshold)
                 return i;
             ++i;
         }
