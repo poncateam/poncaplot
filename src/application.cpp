@@ -1,6 +1,7 @@
 #include "application.h"
 
 #include "myview.h"
+#include "dataManager.h"
 #include "drawingPass.h"
 #include "drawingPasses/distanceField.h"
 
@@ -26,7 +27,10 @@ using namespace nanogui;
 const int tex_width = 500;
 const int tex_height = 500;
 
-PoncaPlotApplication::PoncaPlotApplication() : Screen(Vector2i(1024, 768), "PoncaPlot"){
+PoncaPlotApplication::PoncaPlotApplication() :
+Screen(Vector2i(1024, 768), "PoncaPlot"), m_dataMgr(new DataManager()){
+
+    m_dataMgr->setUpdateFunction([this](){ this->renderPasses();});
 
     passDFWithKdTree      = new DistanceFieldWithKdTree();
     passPlaneFit          = new PlaneFitField();
@@ -161,12 +165,11 @@ PoncaPlotApplication::PoncaPlotApplication() : Screen(Vector2i(1024, 768), "Ponc
             Texture::InterpolationMode::Nearest,
             Texture::WrapMode::ClampToEdge);
 
-    m_image_view = new MyView(window);
+    m_image_view = new MyView(window, m_dataMgr);
     m_image_view->set_size(Vector2i(768, 768));
     m_image_view->set_image(m_texture );
     m_image_view->fitImage();
     m_image_view->center();
-    m_image_view->setUpdateFunction([this](){ this->renderPasses();});
 
     renderPasses(); // render twice to fill m_textureBufferPing and m_textureBufferPong
     renderPasses();
@@ -238,7 +241,7 @@ PoncaPlotApplication::buildPassInterface(int id){
 void
 PoncaPlotApplication::renderPasses() {
     std::cout << "[Main] Update texture" << std::endl;
-    const auto& points = m_image_view->getPointCollection();
+    const auto& points = m_dataMgr->getPointCollection();
     for (auto* p : m_passes) {
         p->render(points, m_computeInPing ? m_textureBufferPing : m_textureBufferPong, tex_width, tex_height);
     }

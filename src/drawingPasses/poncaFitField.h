@@ -19,7 +19,7 @@ struct FitField : public BaseFitField {
     using WeightFunc = typename FitType::WeightFunction;
 
 
-    void render(const MyView::PointCollection& points, uint8_t*buffer, int w, int h) override{
+    void render(const DataManager::PointCollection& points, uint8_t*buffer, int w, int h) override{
         if(points.point_data().empty()) return;
 
         const auto normFactor = float(std::max(w,h));
@@ -61,7 +61,7 @@ struct FitField : public BaseFitField {
     }
 };
 
-using PointType  = typename MyView::PointCollection::DataPoint;
+using PointType  = typename DataManager::PointCollection::DataPoint;
 using Scalar     = typename PointType::Scalar;
 using WeightFunc = Ponca::DistWeightFunc<PointType,Ponca::SmoothWeightKernel<Scalar> >;
 

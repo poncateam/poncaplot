@@ -9,7 +9,7 @@
 
 using namespace nanogui;
 
-MyView::MyView(nanogui::Widget *parent) : ImageView(parent) {
+MyView::MyView(nanogui::Widget *parent, DataManager* mgr) : ImageView(parent), m_dataMgr(mgr) {
     std::cout<< "Controls:\n"
              << "  ctrl+mouse move: move view\n"
              << "  scroll: zoom in/out\n"
@@ -43,10 +43,11 @@ MyView::fitImage() {
 //#define USE_KDTREE
 int
 MyView::findPointId(const Vector2f &lp) const{
-    if(! m_points.empty()) {
+    const auto& points = m_dataMgr->getPointContainer();
+    if(! points.empty()) {
         int i = 0;
 #ifndef USE_KDTREE
-        for(const auto&p : m_points) {
+        for(const auto&p : points) {
             Vector2f query(p.x(), p.y());
             if (norm((lp - query)) <= m_selectionThreshold)
                 return i;
@@ -54,9 +55,10 @@ MyView::findPointId(const Vector2f &lp) const{
         }
 #else
         DataPoint::VectorType query(lp.x(), lp.y());
-        auto res = m_tree.nearest_neighbor(query);
+        const auto& tree = m_dataMgr->getPointCollection();
+        auto res = tree.nearest_neighbor(query);
         if (res.begin() != res.end() &&
-           (query-m_tree.point_data()[res.get()].pos()).norm()<epsilon)
+           (query-tree.point_data()[res.get()].pos()).norm()<m_selectionThreshold)
             return res.get();
 #endif
     }
@@ -75,8 +77,8 @@ MyView::mouse_button_event(const Vector2i &p, int button, bool down, int modifie
         if (pointId < 0) {
             if(button == 0) { // create new point iif left click (button id seems to be different wrt drag event
                 std::cout << "MyView::add new point" << std::endl;
-                m_points.emplace_back(lp.x(), lp.y(), M_PI / 2.);
-                updateCollection();
+                m_dataMgr->getPointContainer().emplace_back(lp.x(), lp.y(), M_PI / 2.);
+                m_dataMgr->updatePointCollection();
             }
         } else {
             m_movedPoint = pointId;
@@ -97,13 +99,14 @@ MyView::mouse_drag_event(const nanogui::Vector2i &p, const nanogui::Vector2i &re
     if (isInsideImage(lp))
     {
         if (m_movedPoint>=0) {
+            auto& points = m_dataMgr->getPointContainer();
             switch (button) {
                 case 1: //left click
                     // if is on a point
 //                    std::cout << "Move point by [" << rel << "]" << std::endl;
-                    m_points[m_movedPoint].x() = lp.x();
-                    m_points[m_movedPoint].y() = lp.y();
-                    updateCollection();
+                    points[m_movedPoint].x() = lp.x();
+                    points[m_movedPoint].y() = lp.y();
+                    m_dataMgr->updatePointCollection();
                     break;
                 case 2: //right click
                 {
@@ -111,9 +114,9 @@ MyView::mouse_drag_event(const nanogui::Vector2i &p, const nanogui::Vector2i &re
                     if (rel.x() < 0) dist *=-1;
                     // if is on a point
                     auto relAngle = std::asin(float(dist) / 50.1f); // move by 40px to get 90 degree angle
-                    m_points[m_movedPoint].z() += relAngle;
+                    points[m_movedPoint].z() += relAngle;
 //                    std::cout << "Change normal by " << rel << ". Gives angle " << m_points[m_movedPoint].z() << std::endl;
-                    updateCollection();
+                    m_dataMgr->updatePointCollection();
                 }
                     break;
                 default:
@@ -122,15 +125,4 @@ MyView::mouse_drag_event(const nanogui::Vector2i &p, const nanogui::Vector2i &re
         }
     }
     return true;
-}
-
-void
-MyView::updateCollection() {
-    // recompute KdTree
-    if(m_points.empty())
-        m_tree.clear();
-    else
-        m_tree.build(m_points );
-
-    m_updateFunction();
 }

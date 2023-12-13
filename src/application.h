@@ -9,6 +9,7 @@
 class DrawingPass;
 class DistanceFieldWithKdTree;
 class MyView;
+class DataManager;
 
 namespace nanogui{
     class Texture;
@@ -37,6 +38,9 @@ private:
     nanogui::Texture*  m_texture {nullptr};
     std::array<DrawingPass*,3> m_passes{nullptr, nullptr, nullptr};
     bool m_needUpdate{false};
+
+    DataManager *m_dataMgr{nullptr};
+
     MyView *m_image_view {nullptr};
     Widget* pass1Widget, *distanceFieldWidget,
             *genericFitWidget,    //< parameters applicable to all fitting techniques
