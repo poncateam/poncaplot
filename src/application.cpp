@@ -30,7 +30,7 @@ const int tex_height = 500;
 PoncaPlotApplication::PoncaPlotApplication() :
 Screen(Vector2i(1024, 768), "PoncaPlot"), m_dataMgr(new DataManager()){
 
-    m_dataMgr->setUpdateFunction([this](){ this->renderPasses();});
+    m_dataMgr->setKdTreePostUpdateFunction([this]() { this->renderPasses(); });
 
     passDFWithKdTree      = new DistanceFieldWithKdTree();
     passPlaneFit          = new PlaneFitField();
@@ -241,7 +241,7 @@ PoncaPlotApplication::buildPassInterface(int id){
 void
 PoncaPlotApplication::renderPasses() {
     std::cout << "[Main] Update texture" << std::endl;
-    const auto& points = m_dataMgr->getPointCollection();
+    const auto& points = m_dataMgr->getKdTree();
     for (auto* p : m_passes) {
         p->render(points, m_computeInPing ? m_textureBufferPing : m_textureBufferPong, tex_width, tex_height);
     }

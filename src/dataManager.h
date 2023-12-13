@@ -25,14 +25,14 @@ private:
 /// Structure holding shared data
 struct DataManager {
 public:
-    using PointCollection = Ponca::KdTree<DataPoint>;
+    using KdTree = Ponca::KdTree<DataPoint>;
     using PointContainer  = std::vector<nanogui::Vector3f>; // stores x,y,normal angle in radians
 
     /// Read access to point collection
-    inline const PointCollection& getPointCollection() const { return m_tree; }
+    inline const KdTree& getKdTree() const { return m_tree; }
 
     /// Update point collection from point container
-    inline void updatePointCollection() {
+    inline void updateKdTree() {
         if(m_points.empty()) m_tree.clear();
         else m_tree.build(m_points );
         m_updateFunction();
@@ -46,11 +46,11 @@ public:
     inline PointContainer& getPointContainer() { return m_points; }
 
     /// Set Update function, called after each point update
-    inline void setUpdateFunction(std::function<void()> &&f) { m_updateFunction = f; }
+    inline void setKdTreePostUpdateFunction(std::function<void()> &&f) { m_updateFunction = f; }
 
 private:
     PointContainer m_points;
-    PointCollection m_tree;
+    KdTree m_tree;
     std::function<void()> m_updateFunction {[](){}};
 };
 

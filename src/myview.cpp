@@ -55,7 +55,7 @@ MyView::findPointId(const Vector2f &lp) const{
         }
 #else
         DataPoint::VectorType query(lp.x(), lp.y());
-        const auto& tree = m_dataMgr->getPointCollection();
+        const auto& tree = m_dataMgr->getKdTree();
         auto res = tree.nearest_neighbor(query);
         if (res.begin() != res.end() &&
            (query-tree.point_data()[res.get()].pos()).norm()<m_selectionThreshold)
@@ -78,7 +78,7 @@ MyView::mouse_button_event(const Vector2i &p, int button, bool down, int modifie
             if(button == 0) { // create new point iif left click (button id seems to be different wrt drag event
                 std::cout << "MyView::add new point" << std::endl;
                 m_dataMgr->getPointContainer().emplace_back(lp.x(), lp.y(), M_PI / 2.);
-                m_dataMgr->updatePointCollection();
+                m_dataMgr->updateKdTree();
             }
         } else {
             m_movedPoint = pointId;
@@ -106,7 +106,7 @@ MyView::mouse_drag_event(const nanogui::Vector2i &p, const nanogui::Vector2i &re
 //                    std::cout << "Move point by [" << rel << "]" << std::endl;
                     points[m_movedPoint].x() = lp.x();
                     points[m_movedPoint].y() = lp.y();
-                    m_dataMgr->updatePointCollection();
+                    m_dataMgr->updateKdTree();
                     break;
                 case 2: //right click
                 {
@@ -116,7 +116,7 @@ MyView::mouse_drag_event(const nanogui::Vector2i &p, const nanogui::Vector2i &re
                     auto relAngle = std::asin(float(dist) / 50.1f); // move by 40px to get 90 degree angle
                     points[m_movedPoint].z() += relAngle;
 //                    std::cout << "Change normal by " << rel << ". Gives angle " << m_points[m_movedPoint].z() << std::endl;
-                    m_dataMgr->updatePointCollection();
+                    m_dataMgr->updateKdTree();
                 }
                     break;
                 default:
