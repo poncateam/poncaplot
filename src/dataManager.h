@@ -10,21 +10,8 @@
 
 #include <Ponca/SpatialPartitioning>
 
-class DataPoint
-{
-public:
-    enum {Dim = 2};
-    using Scalar = float;
-    using VectorType = Eigen::Vector<Scalar,Dim>;
-    using MatrixType = Eigen::Matrix<Scalar,Dim,Dim>;
-    [[nodiscard]] inline const auto& pos() const {return m_pos;}
-    [[nodiscard]] inline const auto& normal() const {return m_normal;}
-    /// \fixme Use maps to avoid duplication
-    explicit inline DataPoint(const nanogui::Vector3f &pn)
-            : m_pos({pn.x(), pn.y()}), m_normal({std::cos(pn.z()), std::sin(pn.z())}) {}
-private:
-    VectorType m_pos, m_normal;
-};
+#include "poncaTypes.h"
+
 
 #ifndef M_PI
 // Source: http://www.geom.uiuc.edu/~huberty/math5337/groupe/digits.html
