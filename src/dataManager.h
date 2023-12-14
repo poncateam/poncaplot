@@ -1,5 +1,6 @@
 #pragma once
 
+#include <optional>
 #include <utility> //pair
 #include <vector>
 #include <string>
@@ -57,6 +58,12 @@ struct MyKdTreeNode : Ponca::KdTreeCustomizableNode<Index, NodeIndex, DataPoint,
             Base::getAsInner().m_aabb = aabb;
         }
     }
+    [[nodiscard]] inline std::optional<AabbType> getAabb() const {
+        if (! Base::is_leaf())
+            return Base::getAsInner().m_aabb;
+        else
+            return std::optional<AabbType>();
+    }
 };
 
 /// Structure holding shared data
@@ -65,6 +72,7 @@ public:
 //    using KdTree = Ponca::KdTree<DataPoint>;
     using KdTree = Ponca::KdTreeBase<Ponca::KdTreeDefaultTraits<DataPoint,MyKdTreeNode>>;
     using PointContainer  = std::vector<nanogui::Vector3f>; // stores x,y,normal angle in radians
+    using VectorType = typename KdTree::VectorType;
 
     /// Read access to point collection
     inline const KdTree& getKdTree() const { return m_tree; }

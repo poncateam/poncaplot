@@ -61,6 +61,19 @@ DataManager::loadPointCloud(const std::string& path){
 
 void
 DataManager::fitPointCloudToRange(const std::pair<float,float>& rangesEnd, const std::pair<float,float>& rangesStart){
-
+    if (m_points.empty()) return;
+    if (m_tree.node_count() == 0) updateKdTree();
+    auto aabb = m_tree.node_data()[0].getAabb();
+    if (aabb){
+        VectorType requestedSize {rangesEnd.first - rangesStart.first, rangesEnd.second - rangesStart.second};
+        VectorType scaleFactors = requestedSize.array() / aabb->diagonal().array();
+        float scale = scaleFactors.minCoeff();
+        for (auto& p : m_points)
+        {
+            p.x() *= scale;
+            p.y() *= scale;
+        }
+        updateKdTree();
+    }
 }
 
