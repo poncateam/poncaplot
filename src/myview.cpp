@@ -7,10 +7,10 @@ using namespace nanogui;
 
 MyView::MyView(nanogui::Widget *parent, DataManager* mgr) : ImageView(parent), m_dataMgr(mgr) {
     std::cout<< "Controls:\n"
-             << "  ctrl+mouse move: move view\n"
              << "  scroll: zoom in/out\n"
              << "  left click: move point\n"
-             << "  right click: change point normal"
+             << "  right click + move: rotate point normal"
+             << "  ctrl+click: invert normal\n"
              << std::endl;
 }
 
@@ -65,19 +65,26 @@ bool
 MyView::mouse_button_event(const Vector2i &p, int button, bool down, int modifiers)
 {
     auto lp = pos_to_pixel(p - m_pos);
-    // left click, no modifier, on press
-    if (modifiers==0 && down && isInsideImage(lp)) {
-//        std::cout << "mouse_button_event: p=[" << pos_to_pixel(p - m_pos) << "], button=[" << button
-//        << "], isdown: " << down << std::endl;
+    // left click, on press
+    if (down && isInsideImage(lp)) {
         auto pointId = findPointId(lp);
-        if (pointId < 0) {
-            if(button == 0) { // create new point iif left click (button id seems to be different wrt drag event
-                std::cout << "MyView::add new point" << std::endl;
-                m_dataMgr->getPointContainer().emplace_back(lp.x(), lp.y(), DEFAULT_POINT_ANGLE);
+        if (modifiers == 0) { // no modified
+            if (pointId < 0) {
+                if (button == 0) { // create new point iif left click (button id seems to be different wrt drag event
+                    std::cout << "MyView::add new point" << std::endl;
+                    m_dataMgr->getPointContainer().emplace_back(lp.x(), lp.y(), DEFAULT_POINT_ANGLE);
+                    m_dataMgr->updateKdTree();
+                }
+            } else {
+                m_movedPoint = pointId;
+            }
+        } else if (modifiers == 2) { // Ctrl
+            if (pointId >= 0) {
+                std::cout << "Flip normal of point " << pointId << std::endl;
+                auto& angle = m_dataMgr->getPointContainer()[pointId].z();
+                angle = float(std::fmod(angle + M_PI, 2.*M_PI));
                 m_dataMgr->updateKdTree();
             }
-        } else {
-            m_movedPoint = pointId;
         }
         return true;
     }
