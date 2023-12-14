@@ -43,13 +43,12 @@ Screen(Vector2i(1024, 768), "PoncaPlot"), m_dataMgr(new DataManager()){
     m_passes[2] = new DisplayPoint({255,0,0,255});
 
     inc_ref();
-    auto *window = new Window(this, "Controls");
+    auto *window = new Window(this, "Utils");
     window->set_position(Vector2i(0, 0));
     window->set_layout(new GroupLayout());
 
     // IO
     {
-        new Label(window, "File dialog", "sans-bold");
         auto *tools = new Widget(window);
         tools->set_layout(new BoxLayout(Orientation::Vertical,
                                         Alignment::Middle, 0, 6));
@@ -69,8 +68,16 @@ Screen(Vector2i(1024, 768), "PoncaPlot"), m_dataMgr(new DataManager()){
             std::cout << "Save file to: " << path << std::endl;
             m_dataMgr->savePointCloud(path);
         });
+        b = new Button(tools, "Fit point cloud view");
+        b->set_callback([&] {
+            const int bordersize = 20;
+            m_dataMgr->fitPointCloudToRange({tex_width-bordersize, tex_height-bordersize},{bordersize,bordersize});
+        });
     }
 
+    window = new Window(this, "Fitting Controls");
+    window->set_position(Vector2i(0, 200));
+    window->set_layout(new GroupLayout());
 
 
     new nanogui::Label(window, "Select Fit Type", "sans-bold");
