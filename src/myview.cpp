@@ -2,10 +2,6 @@
 
 #include <nanogui/texture.h>
 
-#ifndef M_PI
-// Source: http://www.geom.uiuc.edu/~huberty/math5337/groupe/digits.html
-#define M_PI 3.141592653589793238462643383279502884197169399375105820974944592307816406
-#endif
 
 using namespace nanogui;
 
@@ -77,7 +73,7 @@ MyView::mouse_button_event(const Vector2i &p, int button, bool down, int modifie
         if (pointId < 0) {
             if(button == 0) { // create new point iif left click (button id seems to be different wrt drag event
                 std::cout << "MyView::add new point" << std::endl;
-                m_dataMgr->getPointContainer().emplace_back(lp.x(), lp.y(), M_PI / 2.);
+                m_dataMgr->getPointContainer().emplace_back(lp.x(), lp.y(), DEFAULT_POINT_ANGLE);
                 m_dataMgr->updateKdTree();
             }
         } else {

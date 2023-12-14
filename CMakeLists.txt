@@ -52,6 +52,7 @@ endif()
 # Create an executable
 add_executable( poncaplot
         src/dataManager.h
+        src/dataManager.cpp
         src/myview.h
         src/myview.cpp
         src/application.h

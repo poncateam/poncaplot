@@ -1,6 +1,8 @@
 #pragma once
 
+#include <utility> //pair
 #include <vector>
+#include <string>
 
 #include <nanogui/vector.h>
 
@@ -21,6 +23,12 @@ public:
 private:
     VectorType m_pos, m_normal;
 };
+
+#ifndef M_PI
+// Source: http://www.geom.uiuc.edu/~huberty/math5337/groupe/digits.html
+#define M_PI 3.141592653589793238462643383279502884197169399375105820974944592307816406
+#endif
+#define DEFAULT_POINT_ANGLE M_PI / 2.
 
 /// Structure holding shared data
 struct DataManager {
@@ -47,6 +55,16 @@ public:
 
     /// Set Update function, called after each point update
     inline void setKdTreePostUpdateFunction(std::function<void()> &&f) { m_updateFunction = f; }
+
+    /// IO: save current point cloud to file
+    bool savePointCloud(const std::string& path) const;
+
+    /// IO: load point cloud from file
+    bool loadPointCloud(const std::string& path);
+
+    /// Utils: fit point cloud to coordinates ranges
+    void fitPointCloudToRange(const std::pair<float,float>& rangesEnd,
+                              const std::pair<float,float>& rangesStart = {0,0});
 
 private:
     PointContainer m_points;

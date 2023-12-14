@@ -47,6 +47,31 @@ Screen(Vector2i(1024, 768), "PoncaPlot"), m_dataMgr(new DataManager()){
     window->set_position(Vector2i(0, 0));
     window->set_layout(new GroupLayout());
 
+    // IO
+    {
+        new Label(window, "File dialog", "sans-bold");
+        auto *tools = new Widget(window);
+        tools->set_layout(new BoxLayout(Orientation::Vertical,
+                                        Alignment::Middle, 0, 6));
+        auto *b = new Button(tools, "Open point cloud");
+        b->set_callback([&] {
+            auto path = file_dialog(
+                    {{"dat", "Text file x y nx y"},
+                     {"txt", "Text file x y nx y"}}, false);
+            std::cout << "Load file from: " << path << std::endl;
+            m_dataMgr->loadPointCloud(path);
+        });
+        b = new Button(tools, "Save point cloud");
+        b->set_callback([&] {
+            auto path = file_dialog(
+                    {{"dat", "Text file x y nx y"},
+                     {"txt", "Text file x y nx y"}}, true);
+            std::cout << "Save file to: " << path << std::endl;
+            m_dataMgr->savePointCloud(path);
+        });
+    }
+
+
 
     new nanogui::Label(window, "Select Fit Type", "sans-bold");
     auto combo =new nanogui::ComboBox(window,
