@@ -91,6 +91,10 @@ public:
     void fitPointCloudToRange(const std::pair<float,float>& rangesEnd,
                               const std::pair<float,float>& rangesStart = {0,0});
 
+    /// Utils: compute normals using covariance plane fit
+    /// \param Number of neighbors (3 means current point and 2 closest points: left and right)
+    void computeNormals(int k = 3);
+
 private:
     PointContainer m_points;
     KdTree m_tree;

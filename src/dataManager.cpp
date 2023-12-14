@@ -32,6 +32,9 @@ DataManager::loadPointCloud(const std::string& path){
 
     std::string line;
     std::vector<float> numbers;
+
+    bool needToComputeNormals = false;
+
     while ( getline (file,line) )
     {
         // trim comments
@@ -46,6 +49,7 @@ DataManager::loadPointCloud(const std::string& path){
 
             if (numbers.size() == 2){ // loaded x-y only, set normal to default value
                 m_points.emplace_back(numbers[0], numbers[1], DEFAULT_POINT_ANGLE);
+                needToComputeNormals = true;
             } else if (numbers.size() == 4){ // loaded x-y only, set normal to default value
                 m_points.emplace_back(numbers[0], numbers[1], std::acos(numbers[2]));
             } else { // malformed line
@@ -53,10 +57,35 @@ DataManager::loadPointCloud(const std::string& path){
             }
         }
     }
-
     file.close();
     updateKdTree();
+
+    // Use plane fit to compute unoriented normals. Use knn and constant weights
+    if(needToComputeNormals) computeNormals();
+
     return true;
+}
+
+void
+DataManager::computeNormals(int k){
+    using WeightFunc = Ponca::DistWeightFunc<DataPoint,Ponca::ConstantWeightKernel<typename DataPoint::Scalar> >;
+    using PlaneFit = Ponca::Basket<DataPoint ,WeightFunc, Ponca::CovariancePlaneFit>;
+
+    std::cout << "Recompute normals" << std::endl;
+
+    for (auto& pp : m_points){
+        VectorType p {pp.x(),pp.y()};
+        PlaneFit fit;
+        fit.setWeightFunc(WeightFunc());
+        // Set the evaluation position
+        fit.init(p);
+        // Fit plane (method compute handles multipass fitting
+        if (fit.computeWithIds(m_tree.k_nearest_neighbors(p, k), m_tree.point_data()) == Ponca::STABLE) {
+            pp.z() = std::acos(fit.primitiveGradient().normalized().x());
+        } else
+            std::cerr << "Something weird happened here..." << std::endl;
+    }
+    updateKdTree();
 }
 
 void
