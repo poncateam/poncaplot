@@ -4,7 +4,7 @@
 
 struct DistanceField : public DrawingPass {
     inline explicit DistanceField() : DrawingPass() {}
-    void render(const MyView::PointCollection& points, uint8_t*buffer, int w, int h) override {
+    void render(const DataManager::KdTree& points, uint8_t*buffer, int w, int h) override {
         if(points.point_data().empty()) return;
 
         const auto normFactor = float(std::max(w,h));
@@ -28,7 +28,7 @@ struct DistanceField : public DrawingPass {
 };
 struct DistanceFieldWithKdTree : public DrawingPass {
     inline explicit DistanceFieldWithKdTree() : DrawingPass() {}
-    void render(const MyView::PointCollection& points, uint8_t*buffer, int w, int h) override{
+    void render(const DataManager::KdTree& points, uint8_t*buffer, int w, int h) override{
         if(points.point_data().empty()) return;
 
         const auto normFactor = float(std::max(w,h));

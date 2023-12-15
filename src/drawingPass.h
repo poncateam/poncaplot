@@ -3,19 +3,19 @@
 #include <random>
 #include <iostream>
 
-#include "myview.h"
+#include "dataManager.h"
 
 
 /// Base class to rendering processes
 struct DrawingPass {
-    virtual void render(const MyView::PointCollection& points, uint8_t*buffer, int w, int h) = 0;
+    virtual void render(const DataManager::KdTree& points, uint8_t*buffer, int w, int h) = 0;
     virtual ~DrawingPass() = default;
 };
 
 struct FillPass : public DrawingPass {
     inline explicit FillPass(const nanogui::Vector4i &fillColor = {255,255,255,255})
             : m_fillColor(fillColor) {}
-    void render(const MyView::PointCollection& /*points*/, uint8_t*buffer, int w, int h) override{
+    void render(const DataManager::KdTree& /*points*/, uint8_t*buffer, int w, int h) override{
 #pragma omp parallel for default(none) shared(buffer, w, h)
         for(auto j = 0; j<w*h; ++j){
             buffer[j*4] = m_fillColor.x();
@@ -29,7 +29,7 @@ struct FillPass : public DrawingPass {
 
 struct RandomPass : public DrawingPass {
     inline explicit RandomPass() : DrawingPass(), gen(rd()) {}
-    void render(const MyView::PointCollection& /*points*/, uint8_t*buffer, int w, int h) override{
+    void render(const DataManager::KdTree& /*points*/, uint8_t*buffer, int w, int h) override{
 #pragma omp parallel for default(none) shared(buffer, w, h)
         for(auto j = 0; j<w*h; ++j){
             float grad = 255*float(j)/float(w*h);
@@ -49,8 +49,8 @@ private:
 struct DisplayPoint : public DrawingPass {
     inline explicit DisplayPoint(const nanogui::Vector4i &pointColor = {0,0,0,255})
             : DrawingPass(), m_pointColor(pointColor) {}
-    void render(const MyView::PointCollection& points, uint8_t*buffer, int w, int h) override{
-        using VectorType = typename MyView::PointCollection::VectorType;
+    void render(const DataManager::KdTree& points, uint8_t*buffer, int w, int h) override{
+        using VectorType = typename DataManager::KdTree::VectorType;
         const auto pLargeSize = 2.f*m_halfSize;
 #pragma omp parallel for default(none) shared(points, buffer, w, h,pLargeSize)
         for (int pid = 0; pid< points.point_count(); ++pid){

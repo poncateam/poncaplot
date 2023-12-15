@@ -1,7 +1,7 @@
 #pragma once
-#include "../drawingPass.h"
 
-#include <Ponca/Fitting>
+#include "../drawingPass.h"
+#include "../poncaTypes.h"
 
 struct BaseFitField : public DrawingPass{
     inline explicit BaseFitField() : DrawingPass() {}
@@ -19,7 +19,7 @@ struct FitField : public BaseFitField {
     using WeightFunc = typename FitType::WeightFunction;
 
 
-    void render(const MyView::PointCollection& points, uint8_t*buffer, int w, int h) override{
+    void render(const DataManager::KdTree& points, uint8_t*buffer, int w, int h) override{
         if(points.point_data().empty()) return;
 
         const auto normFactor = float(std::max(w,h));
@@ -61,11 +61,7 @@ struct FitField : public BaseFitField {
     }
 };
 
-using PointType  = typename MyView::PointCollection::DataPoint;
-using Scalar     = typename PointType::Scalar;
-using WeightFunc = Ponca::DistWeightFunc<PointType,Ponca::SmoothWeightKernel<Scalar> >;
-
-using PlaneFitField = FitField<Ponca::Basket<PointType ,WeightFunc, Ponca::CovariancePlaneFit>>;
-using SphereFitField = FitField<Ponca::Basket<PointType ,WeightFunc, Ponca::SphereFit>>;
-using OrientedSphereFitField = FitField<Ponca::Basket<PointType ,WeightFunc, Ponca::OrientedSphereFit>>;
-using UnorientedSphereFitField = FitField<Ponca::Basket<PointType ,WeightFunc, Ponca::UnorientedSphereFit>>;
+using PlaneFitField = FitField<PlaneFit>;
+using SphereFitField = FitField<SphereFit>;
+using OrientedSphereFitField = FitField<OrientedSphereFit>;
+using UnorientedSphereFitField = FitField<UnorientedSphereFit>;
