@@ -51,7 +51,7 @@ DataManager::loadPointCloud(const std::string& path){
                 m_points.emplace_back(numbers[0], numbers[1], DEFAULT_POINT_ANGLE);
                 needToComputeNormals = true;
             } else if (numbers.size() == 4){ // loaded x-y only, set normal to default value
-                m_points.emplace_back(numbers[0], numbers[1], std::acos(numbers[2]));
+                m_points.emplace_back(numbers[0], numbers[1], std::atan2(numbers[3], numbers[2]));
             } else { // malformed line
                 std::cerr << "Skipping malformed line: ["  << line << "]" << std::endl;
             }
