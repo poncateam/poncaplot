@@ -19,7 +19,7 @@ struct FitField : public BaseFitField {
     using WeightFunc = typename FitType::WeightFunction;
 
 
-    void render(const DataManager::KdTree& points, uint8_t*buffer, int w, int h) override{
+    void render(const DataManager::KdTree& points, float*buffer, int w, int h) override{
         if(points.point_data().empty()) return;
 
         const auto normFactor = float(std::max(w,h));

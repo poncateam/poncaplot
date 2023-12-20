@@ -8,14 +8,14 @@
 
 /// Base class to rendering processes
 struct DrawingPass {
-    virtual void render(const DataManager::KdTree& points, uint8_t*buffer, int w, int h) = 0;
+    virtual void render(const DataManager::KdTree& points, float*buffer, int w, int h) = 0;
     virtual ~DrawingPass() = default;
 };
 
 struct FillPass : public DrawingPass {
-    inline explicit FillPass(const nanogui::Vector4i &fillColor = {255,255,255,255})
+    inline explicit FillPass(const nanogui::Vector4f &fillColor = {1,1,1,1})
             : m_fillColor(fillColor) {}
-    void render(const DataManager::KdTree& /*points*/, uint8_t*buffer, int w, int h) override{
+    void render(const DataManager::KdTree& /*points*/, float*buffer, int w, int h) override{
 #pragma omp parallel for default(none) shared(buffer, w, h)
         for(auto j = 0; j<w*h; ++j){
             buffer[j*4] = m_fillColor.x();
@@ -24,15 +24,15 @@ struct FillPass : public DrawingPass {
             buffer[j*4+3] = m_fillColor.w();
         }
     }
-    nanogui::Vector4i m_fillColor;
+    nanogui::Vector4f m_fillColor;
 };
 
 struct RandomPass : public DrawingPass {
     inline explicit RandomPass() : DrawingPass(), gen(rd()) {}
-    void render(const DataManager::KdTree& /*points*/, uint8_t*buffer, int w, int h) override{
+    void render(const DataManager::KdTree& /*points*/, float*buffer, int w, int h) override{
 #pragma omp parallel for default(none) shared(buffer, w, h)
         for(auto j = 0; j<w*h; ++j){
-            float grad = 255*float(j)/float(w*h);
+            float grad = float(j)/float(w*h);
             buffer[j*4] = grad;
             buffer[j*4+1] = grad;
             buffer[j*4+2] = grad;
@@ -47,9 +47,9 @@ private:
 };
 
 struct DisplayPoint : public DrawingPass {
-    inline explicit DisplayPoint(const nanogui::Vector4i &pointColor = {0,0,0,255})
+    inline explicit DisplayPoint(const nanogui::Vector4i &pointColor = {0,0,0,1})
             : DrawingPass(), m_pointColor(pointColor) {}
-    void render(const DataManager::KdTree& points, uint8_t*buffer, int w, int h) override{
+    void render(const DataManager::KdTree& points, float*buffer, int w, int h) override{
         using VectorType = typename DataManager::KdTree::VectorType;
         const auto pLargeSize = 2.f*m_halfSize;
 #pragma omp parallel for default(none) shared(points, buffer, w, h,pLargeSize)
@@ -85,6 +85,6 @@ struct DisplayPoint : public DrawingPass {
             }
         }
     }
-    nanogui::Vector4i m_pointColor;
+    nanogui::Vector4f m_pointColor;
     float m_halfSize{1.f};
 };

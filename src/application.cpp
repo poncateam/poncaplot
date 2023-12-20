@@ -38,9 +38,9 @@ Screen(Vector2i(1024, 768), "PoncaPlot"), m_dataMgr(new DataManager()){
     passOrientedSphereFit = new OrientedSphereFitField();
     passUnorientedSphereFit = new UnorientedSphereFitField();
 
-    m_passes[0] = new FillPass( {255,255,255,255});
+    m_passes[0] = new FillPass( {1,1,1,1});
     m_passes[1] = passDFWithKdTree;
-    m_passes[2] = new DisplayPoint({255,0,0,255});
+    m_passes[3] = new DisplayPoint({0,0,0,1});
 
     inc_ref();
     auto *window = new Window(this, "Utils");
@@ -110,7 +110,7 @@ Screen(Vector2i(1024, 768), "PoncaPlot"), m_dataMgr(new DataManager()){
         // dunno why, but sets colorpicker in range [0-255], but reads in [0-1]
         auto cp = new ColorPicker(pass1Widget, (dynamic_cast<FillPass *>(m_passes[0]))->m_fillColor);
         cp->set_final_callback([this](const Color &c) {
-            dynamic_cast<FillPass *>(m_passes[0])->m_fillColor = 255.f * c;
+            dynamic_cast<FillPass *>(m_passes[0])->m_fillColor = c;
             renderPasses();
         });
     }
@@ -169,7 +169,7 @@ Screen(Vector2i(1024, 768), "PoncaPlot"), m_dataMgr(new DataManager()){
         // dunno why, but sets colorpicker in range [0-255], but reads in [0-1]
         auto cp = new ColorPicker(pass3Widget, (dynamic_cast<DisplayPoint *>(m_passes[2]))->m_pointColor);
         cp->set_final_callback([this](const Color &c) {
-            dynamic_cast<DisplayPoint *>(m_passes[2])->m_pointColor = 255.f * c;
+            dynamic_cast<ColorMap *>(m_passes[2])->m_isoColor = c;
             renderPasses();
         });
         auto slider = new Slider(pass3Widget);
@@ -187,11 +187,11 @@ Screen(Vector2i(1024, 768), "PoncaPlot"), m_dataMgr(new DataManager()){
     window->set_size(Vector2i(768,768));
     window->set_layout(new GroupLayout(3));
 
-    m_textureBufferPing = new uint8_t [tex_width * tex_height * 4]; // use UInt8 RGBA textures
-    m_textureBufferPong = new uint8_t [tex_width * tex_height * 4]; // use UInt8 RGBA textures
+    m_textureBufferPing = new float [tex_width * tex_height * 4]; // use Float32 RGBA textures
+    m_textureBufferPong = new float [tex_width * tex_height * 4]; // use Float32 RGBA textures
     m_texture = new Texture(
             Texture::PixelFormat::RGBA,
-            Texture::ComponentFormat::UInt8,
+            Texture::ComponentFormat::Float32,
             {tex_width,tex_height},
             Texture::InterpolationMode::Trilinear,
             Texture::InterpolationMode::Nearest,
@@ -231,7 +231,7 @@ PoncaPlotApplication::draw(NVGcontext *ctx) {
 void
 PoncaPlotApplication::draw_contents() {
     if (m_needUpdate){
-        m_texture->upload(m_computeInPing ? m_textureBufferPong : m_textureBufferPing);
+        m_texture->upload((const uint8_t*) (m_computeInPing ? m_textureBufferPong : m_textureBufferPing));
         m_needUpdate = false;
     }
     Screen::draw_contents();

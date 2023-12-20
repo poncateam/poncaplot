@@ -33,7 +33,7 @@ private:
 
     void renderPasses();
 private:
-    uint8_t*  m_textureBufferPing {nullptr}, *  m_textureBufferPong {nullptr};
+    float*  m_textureBufferPing {nullptr}, *  m_textureBufferPong {nullptr};
     bool m_computeInPing{true};
     nanogui::Texture*  m_texture {nullptr};
     std::array<DrawingPass*,3> m_passes{nullptr, nullptr, nullptr};
