@@ -28,7 +28,7 @@ const int tex_width = 500;
 const int tex_height = 500;
 
 PoncaPlotApplication::PoncaPlotApplication() :
-Screen(Vector2i(1024, 768), "PoncaPlot"), m_dataMgr(new DataManager()){
+Screen(Vector2i(1200, 1024), "PoncaPlot"), m_dataMgr(new DataManager()){
 
     m_dataMgr->setKdTreePostUpdateFunction([this]() { this->renderPasses(); });
 
@@ -39,13 +39,13 @@ Screen(Vector2i(1024, 768), "PoncaPlot"), m_dataMgr(new DataManager()){
     passUnorientedSphereFit = new UnorientedSphereFitField();
 
     m_passes[0] = new FillPass( {1,1,1,1});
-    m_passes[1] = passDFWithKdTree;
+    m_passes[1] = passOrientedSphereFit;
     m_passes[2] = new ColorMap({1,1,1,1});
     m_passes[3] = new DisplayPoint({0,0,0,1});
 
     inc_ref();
     auto *window = new Window(this, "Utils");
-    window->set_position(Vector2i(0, 0));
+    window->set_position(Vector2i(1000, 0));
     window->set_layout(new GroupLayout());
 
     // IO
@@ -74,10 +74,26 @@ Screen(Vector2i(1024, 768), "PoncaPlot"), m_dataMgr(new DataManager()){
             const int bordersize = 20;
             m_dataMgr->fitPointCloudToRange({tex_width-bordersize, tex_height-bordersize},{bordersize,bordersize});
         });
+        b = new Button(tools, "Flip x");
+        b->set_callback([&] {
+            const int bordersize = 20;
+            for (auto& v : m_dataMgr->getPointContainer()){
+                v.x() = tex_width - v.x();
+            }
+            m_dataMgr->fitPointCloudToRange({tex_width-bordersize, tex_height-bordersize},{bordersize,bordersize});
+        });
+        b = new Button(tools, "Flip y");
+        b->set_callback([&] {
+            const int bordersize = 20;
+            for (auto& v : m_dataMgr->getPointContainer()){
+                v.y() = tex_height - v.y();
+            }
+            m_dataMgr->fitPointCloudToRange({tex_width-bordersize, tex_height-bordersize},{bordersize,bordersize});
+        });
     }
 
     window = new Window(this, "Fitting Controls");
-    window->set_position(Vector2i(0, 200));
+    window->set_position(Vector2i(0, 0));
     window->set_layout(new GroupLayout());
 
 
@@ -88,6 +104,7 @@ Screen(Vector2i(1024, 768), "PoncaPlot"), m_dataMgr(new DataManager()){
                                         "Sphere",
                                         "Oriented Sphere",
                                         "Unoriented Sphere"});
+    combo->set_selected_index(3);
     combo->set_callback([this](int id){
         switch (id) {
             case 0: m_passes[1] = passDFWithKdTree; break;
@@ -180,15 +197,19 @@ Screen(Vector2i(1024, 768), "PoncaPlot"), m_dataMgr(new DataManager()){
             renderPasses();
         });
         new nanogui::Label(pass3Widget, "Number of isolines");
-        auto slider = new Slider(pass3Widget);
-        slider->set_value(dynamic_cast<ColorMap *>(m_passes[2])->m_isoQuantifyNumber);
-        slider->set_range({1,20});
-        slider->set_callback([&](float value) {
-            dynamic_cast<ColorMap *>(m_passes[2])->m_isoQuantifyNumber = int(value);
+        auto int_box = new IntBox<int>(pass3Widget, dynamic_cast<ColorMap *>(m_passes[2])->m_isoQuantifyNumber);
+        int_box->set_editable(true);
+        int_box->set_spinnable(true);
+        int_box->set_min_value(1);
+        int_box->set_max_value(20);
+        int_box->set_value_increment(1);
+        int_box->set_callback([&](int value) {
+            dynamic_cast<ColorMap *>(m_passes[2])->m_isoQuantifyNumber = value;
             renderPasses();
         });
+
         new nanogui::Label(pass3Widget, "0-isoline width");
-        slider = new Slider(pass3Widget);
+        auto slider = new Slider(pass3Widget);
         slider->set_value(dynamic_cast<ColorMap *>(m_passes[2])->m_isoWidth);
         slider->set_range({0.1,3.});
         slider->set_callback([&](float value) {
@@ -220,7 +241,7 @@ Screen(Vector2i(1024, 768), "PoncaPlot"), m_dataMgr(new DataManager()){
     }
 
     window = new Window(this, "Image");
-    window->set_position(Vector2i(200, 0));
+    window->set_position(Vector2i(210, 0));
     window->set_size(Vector2i(768,768));
     window->set_layout(new GroupLayout(3));
 
@@ -240,11 +261,10 @@ Screen(Vector2i(1024, 768), "PoncaPlot"), m_dataMgr(new DataManager()){
     m_image_view->fitImage();
     m_image_view->center();
 
-    renderPasses(); // render twice to fill m_textureBufferPing and m_textureBufferPong
-    renderPasses();
+    buildPassInterface(3);
 
-    // call perform_layout
-    buildPassInterface(0);
+    renderPasses();
+    renderPasses(); // render twice to fill m_textureBufferPing and m_textureBufferPong
 }
 
 
