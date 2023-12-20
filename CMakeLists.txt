@@ -80,6 +80,6 @@ set_target_properties(poncaplot PROPERTIES RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_
 
 # Fix compilation error with MSVC
 if (MSVC)
-  target_compile_options(poncaplot PRIVATE /bigobj)
+  target_compile_options(poncaplot PRIVATE /bigobj -openmp:llvm)
 endif ()
 
