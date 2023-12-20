@@ -6,7 +6,7 @@
 struct BaseFitField : public DrawingPass{
     inline explicit BaseFitField() : DrawingPass() {}
     ~BaseFitField() override = default;
-    float m_scale {20.f};
+    float m_scale {40.f};
     int   m_iter  {1};
 };
 
@@ -19,11 +19,11 @@ struct FitField : public BaseFitField {
     using WeightFunc = typename FitType::WeightFunction;
 
 
-    void render(const DataManager::KdTree& points, uint8_t*buffer, int w, int h) override{
+    void render(const DataManager::KdTree& points, float*buffer, int w, int h) override{
         if(points.point_data().empty()) return;
 
-        const auto normFactor = float(std::max(w,h));
-#pragma omp parallel for collapse(2) default(none) shared(normFactor, points, buffer, w, h)
+        float maxVal = 0;
+#pragma omp parallel for collapse(2) default(none) shared(points, buffer, w, h) reduction(max : maxVal)
         for (int j = 0; j < h; ++j ) {
             for (int i = 0; i < w; ++i) {
                 auto *b = buffer + (i + j * w) * 4;
@@ -41,23 +41,19 @@ struct FitField : public BaseFitField {
                         query = fit.project(query);
                     }
                 }
-                if (fit.isStable()){
+
+                if ( (b[2] = fit.isStable()) ){
                     float dist = fit.potential({i,j});
-                    if (dist * dist < 1.4)
-                        b[0] = b[1] = b[2] = 255;
-                    else {
-                        auto col = int(255. * dist / m_scale);
-                        if (dist > 0)
-                            b[0] = b[1] = b[2] = col;
-                        else {
-                            b[0] = -col;
-                            b[1] = b[2] = 0;
-                        }
-                    }
-                    b[3] = 255;
+                    if (std::abs(dist)> maxVal) maxVal = std::abs(dist);
+
+                    b[0] = dist;                     // set pixel value
+                    b[3] = ColorMap::SCALAR_FIELD;   // set field type
                 }
             }
         }
+        // store data for colormap processing (see #ColorMap)
+        buffer[1] = maxVal;
+        buffer[3] = ColorMap::SCALAR_FIELD;
     }
 };
 
