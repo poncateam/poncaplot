@@ -88,3 +88,86 @@ struct DisplayPoint : public DrawingPass {
     nanogui::Vector4f m_pointColor;
     float m_halfSize{1.f};
 };
+
+
+/// Read the input texture and convert it to a color
+/// Expected input for scalar fields
+///   - R: value
+///   - G: max value for the entire image
+///   - B: 1 is value is valid, 0 otherwise (if 0, all fields the other are ignored)
+///   - A: 10 (recognition bit)
+///
+/// Pixels with invalid values are set to default color
+///
+/// \note The recognition bit and the max values are read from the first pixel (buffer[1] and buffer[3] respectively),
+///       and thus must be set even if the pixel is invalid
+struct ColorMap : public DrawingPass {
+    inline explicit ColorMap(const nanogui::Vector4i &isoColor = {1,1,1,1},
+                             const nanogui::Vector4i &defaultColor = {0,0,0,1})
+    : DrawingPass(), m_isoColor(isoColor), m_defaultColor(defaultColor) {}
+
+    [[nodiscard]] inline float quantify(float in) const
+    { return float(std::floor(in * float(m_isoQuantifyNumber)) / float(m_isoQuantifyNumber)); }
+
+    void render(const DataManager::KdTree& points, float*buffer, int w, int h) override{
+        const FieldType ftype {int(buffer[3])};
+        const auto maxVal = buffer[1];
+
+        if (ftype == NO_FIELD) return;
+
+#pragma omp parallel for default(none) shared(buffer, w, h, ftype, maxVal)
+        for(auto j = 0; j<w*h; ++j){
+            auto *b = buffer + j * 4;
+            auto val = b[0];
+            nanogui::Vector4f c =  m_defaultColor;
+
+            switch (ftype) {
+                case SCALAR_FIELD: {
+                    if( FieldValueType(b[2]) )
+                    {
+                        if(std::abs(val) < m_isoWidth)
+                        {
+                            c = m_isoColor;
+                        }
+                        else if(val > 0.f)
+                        {
+                            c[0] = quantify(1.f - val / maxVal);
+                            c[1] = 0;
+                            c[2] = 0;
+                        }
+                        else
+                        {
+                            c[0] = 0;
+                            c[1] = 0;
+                            c[2] = quantify(1.f - (-val / maxVal));
+                        }
+                        c[3] = 1;
+                    }
+
+                }
+                    break;
+                default:
+                    break;
+            }
+            b[0] = c.x();
+            b[1] = c.y();
+            b[2] = c.z();
+            b[3] = c.w();
+        }
+    }
+
+    int m_isoQuantifyNumber {10};
+    float m_isoWidth {0.8};
+    nanogui::Vector4f m_isoColor;
+    nanogui::Vector4f m_defaultColor;
+
+    enum FieldType: int {
+        SCALAR_FIELD = 10,
+        NO_FIELD
+    };
+
+    enum FieldValueType: bool {
+        VALUE_IS_VALID   = true,
+        VALUE_IS_INVALID = false
+    };
+};
