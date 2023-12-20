@@ -36,7 +36,7 @@ private:
     float*  m_textureBufferPing {nullptr}, *  m_textureBufferPong {nullptr};
     bool m_computeInPing{true};
     nanogui::Texture*  m_texture {nullptr};
-    std::array<DrawingPass*,3> m_passes{nullptr, nullptr, nullptr};
+    std::array<DrawingPass*,4> m_passes{nullptr, nullptr, nullptr, nullptr}; // fill, compute, colormap, point
     bool m_needUpdate{false};
 
     DataManager *m_dataMgr{nullptr};
@@ -45,7 +45,7 @@ private:
     Widget* pass1Widget, *distanceFieldWidget,
             *genericFitWidget,    //< parameters applicable to all fitting techniques
     *planeFitWidget, *sphereFitWidget, *orientedSphereFitWidget, *unorientedSphereFitWidget,
-            *pass3Widget;
+            *pass3Widget,*pass4Widget;
     DistanceFieldWithKdTree *passDFWithKdTree;
     PlaneFitField *passPlaneFit;
     SphereFitField *passSphereFit;
