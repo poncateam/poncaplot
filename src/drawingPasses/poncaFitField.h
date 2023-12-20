@@ -6,7 +6,7 @@
 struct BaseFitField : public DrawingPass{
     inline explicit BaseFitField() : DrawingPass() {}
     ~BaseFitField() override = default;
-    float m_scale {20.f};
+    float m_scale {40.f};
     int   m_iter  {1};
 };
 
