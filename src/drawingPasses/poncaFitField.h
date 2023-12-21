@@ -49,8 +49,8 @@ struct FitField : public BaseFitField {
                     float dist = fit.potential({i,j});
                     if (std::abs(dist)> maxVal) maxVal = std::abs(dist);
 
-                    b[0] = dist;                     // set pixel value
-                    b[3] = ColorMap::SCALAR_FIELD;   // set field type
+                    b[0] = fit.isSigned() ? dist : std::abs(dist);  // set pixel value
+                    b[3] = ColorMap::SCALAR_FIELD;                         // set field type
                 }
             }
         }
