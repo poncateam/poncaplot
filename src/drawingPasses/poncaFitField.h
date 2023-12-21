@@ -22,7 +22,7 @@ struct FitField : public BaseFitField {
     virtual void postProcess(FitType& /*fit*/){};
 
     void render(const DataManager::KdTree& points, float*buffer, int w, int h) override{
-        if(points.point_data().empty()) return;
+        if(points.points().empty()) return;
 
         float maxVal = 0;
 #pragma omp parallel for collapse(2) default(none) shared(points, buffer, w, h) reduction(max : maxVal)
@@ -38,7 +38,7 @@ struct FitField : public BaseFitField {
                 for (int iter = 0; iter != m_iter; ++iter) {
                     fit.init(query);
                     // Fit plane (method compute handles multipass fitting
-                    if (fit.computeWithIds(points.range_neighbors(query, m_scale), points.point_data()) ==
+                    if (fit.computeWithIds(points.range_neighbors(query, m_scale), points.points()) ==
                         Ponca::STABLE) {
                         query = fit.project(query);
                     }

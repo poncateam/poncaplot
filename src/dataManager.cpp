@@ -13,7 +13,7 @@ DataManager::savePointCloud(const std::string& path) const{
     if( ! file.is_open() ) return false;
 
     file << "# x y nx ny " << "\n";
-    for( const auto & p : m_tree.point_data() ){
+    for( const auto & p : m_tree.points() ){
         file << p.pos().transpose() << " " << p.normal().transpose() << "\n";
     }
     file.close();
@@ -80,7 +80,7 @@ DataManager::computeNormals(int k){
         // Set the evaluation position
         fit.init(p);
         // Fit plane (method compute handles multipass fitting
-        if (fit.computeWithIds(m_tree.k_nearest_neighbors(p, k), m_tree.point_data()) == Ponca::STABLE) {
+        if (fit.computeWithIds(m_tree.k_nearest_neighbors(p, k), m_tree.points()) == Ponca::STABLE) {
             pp.z() = std::acos(fit.primitiveGradient().normalized().x());
         } else
             std::cerr << "Something weird happened here..." << std::endl;
@@ -92,7 +92,7 @@ void
 DataManager::fitPointCloudToRange(const std::pair<float,float>& rangesEnd, const std::pair<float,float>& rangesStart){
     if (m_points.empty()) return;
     if (m_tree.node_count() == 0) updateKdTree();
-    auto aabb = m_tree.node_data()[0].getAabb();
+    auto aabb = m_tree.nodes()[0].getAabb();
     if (aabb){
         VectorType requestedSize {rangesEnd.first - rangesStart.first, rangesEnd.second - rangesStart.second};
         VectorType scaleFactors = requestedSize.array() / aabb->diagonal().array();
