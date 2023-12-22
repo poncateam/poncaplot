@@ -46,9 +46,7 @@ private:
             *genericFitWidget,    //< parameters applicable to all fitting techniques
     *planeFitWidget, *sphereFitWidget, *orientedSphereFitWidget, *unorientedSphereFitWidget,
             *pass3Widget,*pass4Widget;
-    DistanceFieldWithKdTree *passDFWithKdTree;
-    PlaneFitField *passPlaneFit;
-    SphereFitField *passSphereFit;
-    OrientedSphereFitField *passOrientedSphereFit;
-    UnorientedSphereFitField *passUnorientedSphereFit;
+
+
+    BaseFitField* passPlaneFit, *passSphereFit, *passOrientedSphereFit, *passUnorientedSphereFit;
 };
