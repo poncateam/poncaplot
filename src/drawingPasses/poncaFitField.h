@@ -18,6 +18,8 @@ struct FitField : public BaseFitField {
     using FitType = _FitType;
     using WeightFunc = typename FitType::WeightFunction;
 
+    /// Method called at the end of the fitting process, only for stable fits
+    virtual void postProcess(FitType& /*fit*/){};
 
     void render(const DataManager::KdTree& points, float*buffer, int w, int h) override{
         if(points.point_data().empty()) return;
@@ -43,6 +45,7 @@ struct FitField : public BaseFitField {
                 }
 
                 if ( (b[2] = fit.isStable()) ){
+                    postProcess(fit);
                     float dist = fit.potential({i,j});
                     if (std::abs(dist)> maxVal) maxVal = std::abs(dist);
 
@@ -58,6 +61,13 @@ struct FitField : public BaseFitField {
 };
 
 using PlaneFitField = FitField<PlaneFit>;
-using SphereFitField = FitField<SphereFit>;
-using OrientedSphereFitField = FitField<OrientedSphereFit>;
-using UnorientedSphereFitField = FitField<UnorientedSphereFit>;
+
+struct SphereFitField : public FitField<SphereFit>{
+    void postProcess(typename FitField<SphereFit>::FitType& fit) override { fit.applyPrattNorm(); };
+};
+struct OrientedSphereFitField : public FitField<OrientedSphereFit>{
+    void postProcess(typename FitField<OrientedSphereFit>::FitType& fit) override { fit.applyPrattNorm(); };
+};
+struct UnorientedSphereFitField : public FitField<UnorientedSphereFit>{
+    void postProcess(typename FitField<UnorientedSphereFit>::FitType& fit) override { fit.applyPrattNorm(); };
+};
