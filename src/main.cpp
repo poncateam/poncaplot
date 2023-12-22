@@ -13,28 +13,48 @@
 
 #include <iostream>
 
+#include "dataManager.h"
 #include "application.h"
+#include "cli.h"
 
-int main(int /* argc */, char ** /* argv */) {
-    try {
-        nanogui::init();
+DataManager *mgr {nullptr};
 
-        /* scoped variables */ {
-            nanogui::ref<PoncaPlotApplication> app = new PoncaPlotApplication();
-            app->dec_ref();
-            app->draw_all();
-            app->set_visible(true);
-            nanogui::mainloop(1 / 10.f * 1000);
+void clean(){
+    if (mgr){
+        delete mgr;
+        mgr = nullptr;
+    }
+}
+
+int main(int argc , char ** argv) {
+    mgr = new DataManager();
+
+    PoncaPlotCLI cli(mgr);
+
+    if (! cli.run(argc, argv)) {
+        std::cout << "CLI does not want to run: launching graphic app" << std::endl;
+        try {
+            nanogui::init();
+
+            /* scoped variables */ {
+                nanogui::ref<PoncaPlotApplication> app = new PoncaPlotApplication(mgr);
+                app->dec_ref();
+                app->draw_all();
+                app->set_visible(true);
+                nanogui::mainloop(1 / 10.f * 1000);
+            }
+
+            nanogui::shutdown();
+        } catch (const std::exception &e) {
+            std::string error_msg = std::string("Caught a fatal error: ") + std::string(e.what());
+            std::cerr << error_msg << std::endl;
+            clean();
+            return -1;
+        } catch (...) {
+            std::cerr << "Caught an unknown error!" << std::endl;
         }
-
-        nanogui::shutdown();
-    } catch (const std::exception &e) {
-        std::string error_msg = std::string("Caught a fatal error: ") + std::string(e.what());
-        std::cerr << error_msg << std::endl;
-        return -1;
-    } catch (...) {
-        std::cerr << "Caught an unknown error!" << std::endl;
     }
 
+    clean();
     return 0;
 }
