@@ -27,8 +27,8 @@ using namespace nanogui;
 const int tex_width = 500;
 const int tex_height = 500;
 
-PoncaPlotApplication::PoncaPlotApplication() :
-Screen(Vector2i(1200, 1024), "PoncaPlot"), m_dataMgr(new DataManager()){
+PoncaPlotApplication::PoncaPlotApplication(DataManager* mgr) :
+Screen(Vector2i(1200, 1024), "PoncaPlot"), m_dataMgr(mgr){
 
     m_dataMgr->setKdTreePostUpdateFunction([this]() { this->renderPasses(); });
 
