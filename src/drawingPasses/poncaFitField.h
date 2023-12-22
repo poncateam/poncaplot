@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../drawingPass.h"
-#include "../poncaTypes.h"
 
 struct BaseFitField : public DrawingPass{
     inline explicit BaseFitField() : DrawingPass() {}
@@ -21,7 +20,7 @@ struct FitField : public BaseFitField {
     /// Method called at the end of the fitting process, only for stable fits
     virtual void postProcess(FitType& /*fit*/){};
 
-    void render(const DataManager::KdTree& points, float*buffer, int w, int h) override{
+    void render(const KdTree& points, float*buffer, int w, int h) override{
         if(points.point_data().empty()) return;
 
         float maxVal = 0;

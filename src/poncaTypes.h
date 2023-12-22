@@ -25,3 +25,40 @@ using PlaneFit = Ponca::Basket<DataPoint ,WeightFunc, Ponca::CovariancePlaneFit>
 using SphereFit = Ponca::Basket<DataPoint ,WeightFunc, Ponca::SphereFit>;
 using OrientedSphereFit= Ponca::Basket<DataPoint ,WeightFunc, Ponca::OrientedSphereFit>;
 using UnorientedSphereFit = Ponca::Basket<DataPoint ,WeightFunc, Ponca::UnorientedSphereFit>;
+
+
+
+
+#include <Ponca/SpatialPartitioning>
+
+template <typename NodeIndex, typename Scalar, int DIM, typename _AabbType = Eigen::AlignedBox<Scalar, DIM>>
+struct MyKdTreeInnerNode : public Ponca::KdTreeDefaultInnerNode<NodeIndex, Scalar, DIM> {
+    using AabbType = _AabbType;
+    AabbType m_aabb{};
+};
+
+template <typename Index, typename NodeIndex, typename DataPoint, typename LeafSize = Index>
+struct MyKdTreeNode : Ponca::KdTreeCustomizableNode<Index, NodeIndex, DataPoint, LeafSize,
+        MyKdTreeInnerNode<NodeIndex, typename DataPoint::Scalar, DataPoint::Dim>> {
+
+    using Base = Ponca::KdTreeCustomizableNode<Index, NodeIndex, DataPoint, LeafSize,
+            MyKdTreeInnerNode<NodeIndex, typename DataPoint::Scalar, DataPoint::Dim>>;
+    using AabbType  = typename Base::AabbType;
+
+    void configure_range(Index start, Index size, const AabbType &aabb)
+    {
+        Base::configure_range(start, size, aabb);
+        if (! Base::is_leaf() )
+        {
+            Base::getAsInner().m_aabb = aabb;
+        }
+    }
+    [[nodiscard]] inline std::optional<AabbType> getAabb() const {
+        if (! Base::is_leaf())
+            return Base::getAsInner().m_aabb;
+        else
+            return std::optional<AabbType>();
+    }
+};
+
+using KdTree = Ponca::KdTreeBase<Ponca::KdTreeDefaultTraits<DataPoint,MyKdTreeNode>>;
