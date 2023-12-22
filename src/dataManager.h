@@ -19,39 +19,6 @@
 #endif
 #define DEFAULT_POINT_ANGLE M_PI / 2.
 
-template <typename NodeIndex, typename Scalar, int DIM, typename _AabbType = Eigen::AlignedBox<Scalar, DIM>>
-struct MyKdTreeInnerNode : public Ponca::KdTreeDefaultInnerNode<NodeIndex, Scalar, DIM> {
-    using AabbType = _AabbType;
-    AabbType m_aabb{};
-};
-//
-//template <typename Index, typename NodeIndex, typename DataPoint, typename LeafSize = Index>
-//using MyKdTreeNode = Ponca::KdTreeCustomizableNode<Index, NodeIndex, DataPoint, LeafSize,
-//        MyKdTreeInnerNode<NodeIndex, typename DataPoint::Scalar, DataPoint::Dim> >;
-
-template <typename Index, typename NodeIndex, typename DataPoint, typename LeafSize = Index>
-struct MyKdTreeNode : Ponca::KdTreeCustomizableNode<Index, NodeIndex, DataPoint, LeafSize,
-        MyKdTreeInnerNode<NodeIndex, typename DataPoint::Scalar, DataPoint::Dim>> {
-
-    using Base = Ponca::KdTreeCustomizableNode<Index, NodeIndex, DataPoint, LeafSize,
-            MyKdTreeInnerNode<NodeIndex, typename DataPoint::Scalar, DataPoint::Dim>>;
-    using AabbType  = typename Base::AabbType;
-
-    void configure_range(Index start, Index size, const AabbType &aabb)
-    {
-        Base::configure_range(start, size, aabb);
-        if (! Base::is_leaf() )
-        {
-            Base::getAsInner().m_aabb = aabb;
-        }
-    }
-    [[nodiscard]] inline std::optional<AabbType> getAabb() const {
-        if (! Base::is_leaf())
-            return Base::getAsInner().m_aabb;
-        else
-            return std::optional<AabbType>();
-    }
-};
 
 /// Structure holding shared data
 struct DataManager {

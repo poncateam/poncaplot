@@ -3,19 +3,19 @@
 #include <random>
 #include <iostream>
 
-#include "dataManager.h"
+#include "poncaTypes.h"
 
 
 /// Base class to rendering processes
 struct DrawingPass {
-    virtual void render(const DataManager::KdTree& points, float*buffer, int w, int h) = 0;
+    virtual void render(const KdTree& points, float*buffer, int w, int h) = 0;
     virtual ~DrawingPass() = default;
 };
 
 struct FillPass : public DrawingPass {
     inline explicit FillPass(const nanogui::Vector4f &fillColor = {1,1,1,1})
             : m_fillColor(fillColor) {}
-    void render(const DataManager::KdTree& /*points*/, float*buffer, int w, int h) override{
+    void render(const KdTree& /*points*/, float*buffer, int w, int h) override{
 #pragma omp parallel for default(none) shared(buffer, w, h)
         for(auto j = 0; j<w*h; ++j){
             buffer[j*4] = m_fillColor.x();
@@ -29,7 +29,7 @@ struct FillPass : public DrawingPass {
 
 struct RandomPass : public DrawingPass {
     inline explicit RandomPass() : DrawingPass(), gen(rd()) {}
-    void render(const DataManager::KdTree& /*points*/, float*buffer, int w, int h) override{
+    void render(const KdTree& /*points*/, float*buffer, int w, int h) override{
 #pragma omp parallel for default(none) shared(buffer, w, h)
         for(auto j = 0; j<w*h; ++j){
             float grad = float(j)/float(w*h);
@@ -49,8 +49,8 @@ private:
 struct DisplayPoint : public DrawingPass {
     inline explicit DisplayPoint(const nanogui::Vector4i &pointColor = {0,0,0,1})
             : DrawingPass(), m_pointColor(pointColor) {}
-    void render(const DataManager::KdTree& points, float*buffer, int w, int h) override{
-        using VectorType = typename DataManager::KdTree::VectorType;
+    void render(const KdTree& points, float*buffer, int w, int h) override{
+        using VectorType = typename KdTree::VectorType;
         const auto pLargeSize = 2.f*m_halfSize;
 #pragma omp parallel for default(none) shared(points, buffer, w, h,pLargeSize)
         for (int pid = 0; pid< points.point_count(); ++pid){
@@ -109,7 +109,7 @@ struct ColorMap : public DrawingPass {
     [[nodiscard]] inline float quantify(float in) const
     { return float(std::floor(in * float(m_isoQuantifyNumber)) / float(m_isoQuantifyNumber)); }
 
-    void render(const DataManager::KdTree& points, float*buffer, int w, int h) override{
+    void render(const KdTree& points, float*buffer, int w, int h) override{
         const FieldType ftype {int(buffer[3])};
         const auto maxVal = buffer[1];
 

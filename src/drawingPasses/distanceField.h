@@ -4,7 +4,7 @@
 
 struct DistanceField : public DrawingPass {
     inline explicit DistanceField() : DrawingPass() {}
-    void render(const DataManager::KdTree& points, float*buffer, int w, int h) override {
+    void render(const KdTree& points, float*buffer, int w, int h) override {
         if(points.points().empty())
         {
             buffer[1] = ColorMap::NO_FIELD;
@@ -34,7 +34,7 @@ struct DistanceField : public DrawingPass {
 };
 struct DistanceFieldWithKdTree : public DrawingPass {
     inline explicit DistanceFieldWithKdTree() : DrawingPass() {}
-    void render(const DataManager::KdTree& points, float*buffer, int w, int h) override{
+    void render(const KdTree& points, float*buffer, int w, int h) override{
         if(points.points().empty())
         {
             buffer[1] = ColorMap::NO_FIELD;
