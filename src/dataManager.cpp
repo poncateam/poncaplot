@@ -3,6 +3,15 @@
 #include <iostream>
 #include <fstream>
 
+DataManager::DataManager() {
+    m_drawingPasses.fill(nullptr);
+}
+
+DataManager::~DataManager() {
+    for (auto* p : m_drawingPasses)
+        delete p;
+}
+
 bool
 DataManager::savePointCloud(const std::string& path) const{
     if( path.empty() ) return false;
@@ -106,3 +115,36 @@ DataManager::fitPointCloudToRange(const std::pair<float,float>& rangesEnd, const
     }
 }
 
+DrawingPass*
+DataManager::getDrawingPass(const std::string& name){
+    return getDrawingPass(supportedDrawingPasses.at(name));
+}
+
+DrawingPass*
+DataManager::getDrawingPass(size_t index){
+    if (index >= nbSupportedDrawingPasses) return nullptr;
+
+    DrawingPass** p = &(m_drawingPasses[index]);
+    if((*p) == nullptr) {
+        switch (index) {
+            case 0: //Distance Field
+                *p = new DistanceFieldWithKdTree();
+                break;
+            case 1: // Plane
+                *p = new PlaneFitField();
+                break;
+            case 2: // Sphere
+                *p = new SphereFitField();
+                break;
+            case 3: // Oriented Sphere
+                *p = new OrientedSphereFitField();
+                break;
+            case 4: // Unoriented Sphere
+                *p = new UnorientedSphereFitField();
+                break;
+            default:
+                break;
+        }
+    }
+    return *p;
+}
