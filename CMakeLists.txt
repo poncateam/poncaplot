@@ -41,6 +41,13 @@ set( NANOGUI_BUILD_PYTHON CACHE BOOL OFF)
 message("\n\n == CMAKE recursively building NanoGUI\n")
 add_subdirectory("external/nanogui")
 
+# Add argparse
+set(ARGPARSE_INSTALL OFF)
+set(ARGPARSE_BUILD_TESTS OFF)
+set(ARGPARSE_BUILD_SAMPLES OFF)
+message("\n\n == CMAKE recursively building argparse\n")
+add_subdirectory("external/argparse")
+
 # Find OpenMP
 find_package(OpenMP)
 set(OpenMP_link_libraries )
@@ -57,6 +64,8 @@ add_executable( poncaplot
         src/myview.cpp
         src/application.h
         src/application.cpp
+        src/cli.h
+        src/cli.cpp
         src/poncaTypes.h
         src/drawingPass.h
         src/drawingPasses/distanceField.h

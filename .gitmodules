@@ -4,3 +4,6 @@
 [submodule "external/ponca"]
 	path = external/ponca
 	url = https://github.com/poncateam/ponca.git
+[submodule "external/argparse"]
+	path = external/argparse
+	url = https://github.com/p-ranav/argparse.git
