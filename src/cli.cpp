@@ -36,13 +36,19 @@ PoncaPlotCLI::run(int argc, char **argv) {
             .required()
             .help("input file (.pts or .txt)");
     program.add_argument("-o", "--output")
-            .required()
             .help("output file (image)");
     program.add_argument("-f", "--fitType")
             .help("fit type: [" + namesStr + "]");
 
     try {
         program.parse_args(argc, argv);
+        auto inputPath = program.get("-i");
+        if (! inputPath.empty())
+        {
+            m_dataMgr->loadPointCloud(inputPath);
+            // load other properties
+            if( ! program.is_used("-o")) return false; // be sure that GUI is started.
+        }
     }
     catch (const std::exception& err) {
         std::cout << err.what() << std::endl;
