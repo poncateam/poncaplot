@@ -2,6 +2,7 @@
 
 #include <Ponca/Fitting>
 
+#include <optional>
 
 class DataPoint
 {
