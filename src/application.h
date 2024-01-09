@@ -20,7 +20,7 @@ namespace nanogui{
 class PoncaPlotApplication : public nanogui::Screen {
 
 public:
-    PoncaPlotApplication();
+    PoncaPlotApplication(DataManager* mgr);
 
     bool keyboard_event(int key, int scancode, int action, int modifiers) override;
 
@@ -46,9 +46,7 @@ private:
             *genericFitWidget,    //< parameters applicable to all fitting techniques
     *planeFitWidget, *sphereFitWidget, *orientedSphereFitWidget, *unorientedSphereFitWidget,
             *pass3Widget,*pass4Widget;
-    DistanceFieldWithKdTree *passDFWithKdTree;
-    PlaneFitField *passPlaneFit;
-    SphereFitField *passSphereFit;
-    OrientedSphereFitField *passOrientedSphereFit;
-    UnorientedSphereFitField *passUnorientedSphereFit;
+
+
+    BaseFitField* passPlaneFit, *passSphereFit, *passOrientedSphereFit, *passUnorientedSphereFit;
 };

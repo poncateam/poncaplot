@@ -27,19 +27,17 @@ using namespace nanogui;
 const int tex_width = 500;
 const int tex_height = 500;
 
-PoncaPlotApplication::PoncaPlotApplication() :
-Screen(Vector2i(1200, 1024), "PoncaPlot"), m_dataMgr(new DataManager()){
+PoncaPlotApplication::PoncaPlotApplication(DataManager* mgr) :
+Screen(Vector2i(1200, 1024), "PoncaPlot"), m_dataMgr(mgr){
 
     m_dataMgr->setKdTreePostUpdateFunction([this]() { this->renderPasses(); });
 
-    passDFWithKdTree      = new DistanceFieldWithKdTree();
-    passPlaneFit          = new PlaneFitField();
-    passSphereFit         = new SphereFitField();
-    passOrientedSphereFit = new OrientedSphereFitField();
-    passUnorientedSphereFit = new UnorientedSphereFitField();
+    // force creation of all supported DrawingPasses
+    for(int i=0;i!=m_dataMgr->nbSupportedDrawingPasses;++i)
+        m_dataMgr->getDrawingPass(i);
 
     m_passes[0] = new FillPass( {1,1,1,1});
-    m_passes[1] = passOrientedSphereFit;
+    m_passes[1] = m_dataMgr->getDrawingPass("Oriented Sphere");
     m_passes[2] = new ColorMap({1,1,1,1});
     m_passes[3] = new DisplayPoint({0,0,0,1});
 
@@ -98,22 +96,16 @@ Screen(Vector2i(1200, 1024), "PoncaPlot"), m_dataMgr(new DataManager()){
 
 
     new nanogui::Label(window, "Select Fit Type", "sans-bold");
-    auto combo =new nanogui::ComboBox(window,
-                                      { "Distance Field",
-                                        "Plane",
-                                        "Sphere",
-                                        "Oriented Sphere",
-                                        "Unoriented Sphere"});
+
+    std::vector<std::string> names;
+    names.resize(m_dataMgr->nbSupportedDrawingPasses);
+    for (const auto& p : m_dataMgr->supportedDrawingPasses)
+        names[p.second] = p.first;
+
+    auto combo =new nanogui::ComboBox(window, names);
     combo->set_selected_index(3);
     combo->set_callback([this](int id){
-        switch (id) {
-            case 0: m_passes[1] = passDFWithKdTree; break;
-            case 1: m_passes[1] = passPlaneFit; break;
-            case 2: m_passes[1] = passSphereFit; break;
-            case 3: m_passes[1] = passOrientedSphereFit; break;
-            case 4: m_passes[1] = passUnorientedSphereFit; break;
-            default: throw std::runtime_error("Unknown Field type!");
-        }
+        m_passes[1] = m_dataMgr->getDrawingPass(id);
         buildPassInterface(id);
         renderPasses();
     });
@@ -140,6 +132,11 @@ Screen(Vector2i(1200, 1024), "PoncaPlot"), m_dataMgr(new DataManager()){
         new nanogui::Label(distanceFieldWidget, "Distance Field", "sans-bold");
         new nanogui::Label(distanceFieldWidget, "no parameter available");
     }
+
+    passPlaneFit = dynamic_cast<BaseFitField*>(m_dataMgr->getDrawingPass("Plane"));
+    passSphereFit = dynamic_cast<BaseFitField*>(m_dataMgr->getDrawingPass("Sphere"));
+    passOrientedSphereFit = dynamic_cast<BaseFitField*>(m_dataMgr->getDrawingPass("Oriented Sphere"));
+    passUnorientedSphereFit = dynamic_cast<BaseFitField*>(m_dataMgr->getDrawingPass("Unoriented Sphere"));
 
     {
         genericFitWidget = new nanogui::Widget(window);
