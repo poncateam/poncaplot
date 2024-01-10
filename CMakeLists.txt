@@ -78,6 +78,7 @@ target_include_directories(poncaplot PUBLIC
                             "${CMAKE_CURRENT_SOURCE_DIR}/external/nanogui/include"
                             "${CMAKE_CURRENT_SOURCE_DIR}/external/ponca/"
                             "${CMAKE_CURRENT_SOURCE_DIR}/external/argparse/include"
+                            "${CMAKE_CURRENT_SOURCE_DIR}/external/stb/"
                             "${CMAKE_CURRENT_SOURCE_DIR}/src/")
 
 # Link settings
