@@ -5,7 +5,7 @@
 struct DistanceField : public DrawingPass {
     inline explicit DistanceField() : DrawingPass() {}
     void render(const DataManager::KdTree& points, float*buffer, int w, int h) override {
-        if(points.point_data().empty())
+        if(points.points().empty())
         {
             buffer[1] = ColorMap::NO_FIELD;
             return;
@@ -17,7 +17,7 @@ struct DistanceField : public DrawingPass {
             for (int i = 0; i < w; ++i) {
                 auto *b = buffer + (i + j * w) * 4;
                 float minDist {float(w*h)};  //distance should necessarily be smaller
-                for (const auto &p : points.point_data()) {
+                for (const auto &p : points.points()) {
                     int u(std::floor(p.pos().x()));
                     int v(std::floor(p.pos().y()));
                     auto dist = float(std::sqrt((i-u)*(i-u) + (j-v)*(j-v)));
@@ -35,7 +35,7 @@ struct DistanceField : public DrawingPass {
 struct DistanceFieldWithKdTree : public DrawingPass {
     inline explicit DistanceFieldWithKdTree() : DrawingPass() {}
     void render(const DataManager::KdTree& points, float*buffer, int w, int h) override{
-        if(points.point_data().empty())
+        if(points.points().empty())
         {
             buffer[1] = ColorMap::NO_FIELD;
             return;
@@ -49,7 +49,7 @@ struct DistanceFieldWithKdTree : public DrawingPass {
                 DataPoint::VectorType query (i, j);
                 auto res = points.nearest_neighbor( query );
                 if(res.begin()!=res.end()) {
-                    auto nei = points.point_data()[res.get()].pos();
+                    auto nei = points.points()[res.get()].pos();
                     float dist = (nei-query).norm();
                     b[0] = dist;
                     b[2] = ColorMap::VALUE_IS_VALID;

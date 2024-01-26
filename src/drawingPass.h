@@ -54,7 +54,7 @@ struct DisplayPoint : public DrawingPass {
         const auto pLargeSize = 2.f*m_halfSize;
 #pragma omp parallel for default(none) shared(points, buffer, w, h,pLargeSize)
         for (int pid = 0; pid< points.point_count(); ++pid){
-            const auto& p = points.point_data()[pid];
+            const auto& p = points.points()[pid];
             // Build vector that is orthogonal to the normal vector
             const VectorType& tangent {p.normal().y(), -p.normal().x()};
             int i (std::floor(p.pos().x()));

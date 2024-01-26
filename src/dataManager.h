@@ -57,7 +57,7 @@ struct MyKdTreeNode : Ponca::KdTreeCustomizableNode<Index, NodeIndex, DataPoint,
 struct DataManager {
 public:
 //    using KdTree = Ponca::KdTree<DataPoint>;
-    using KdTree = Ponca::KdTreeBase<Ponca::KdTreeDefaultTraits<DataPoint,MyKdTreeNode>>;
+    using KdTree = Ponca::KdTreeDenseBase<Ponca::KdTreeDefaultTraits<DataPoint,MyKdTreeNode>>;
     using PointContainer  = std::vector<nanogui::Vector3f>; // stores x,y,normal angle in radians
     using VectorType = typename KdTree::VectorType;
 
