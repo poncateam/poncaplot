@@ -58,10 +58,10 @@ PoncaPlotCLI::run(int argc, char **argv) {
     {
         program.add_argument("-o", "--output")
                 .help("output file (image)");
-        program.add_argument("-w", "--width")
+        program.add_argument("--width")
                 .help("output image width (in pixels)")
                 .default_value(params.output.width);
-        program.add_argument("-h", "--height")
+        program.add_argument("--height")
                 .help("output image height (in pixels)")
                 .default_value(params.output.height);
     }
