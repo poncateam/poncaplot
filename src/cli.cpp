@@ -58,11 +58,13 @@ PoncaPlotCLI::run(int argc, char **argv) {
     {
         program.add_argument("-o", "--output")
                 .help("output file (image)");
-        program.add_argument("--width")
+        program.add_argument("-W", "--width")
                 .help("output image width (in pixels)")
+                .scan<'i', size_t>()
                 .default_value(params.output.width);
-        program.add_argument("--height")
+        program.add_argument("-H", "--height")
                 .help("output image height (in pixels)")
+                .scan<'i', size_t>()
                 .default_value(params.output.height);
     }
 
@@ -99,8 +101,8 @@ PoncaPlotCLI::run(int argc, char **argv) {
             auto output = program.present("-o");
             if( output ) {
                 params.output.path   = output.value();
-                if (program.is_used("-w")) params.output.width   = program.get<int>("-w");
-                if (program.is_used("-h")) params.output.height  = program.get<int>("-h");
+                if (program.is_used("-W")) params.output.width   = program.get<size_t>("-W");
+                if (program.is_used("-H")) params.output.height  = program.get<size_t>("-H");
             } else
                 skipGUI = false; // no output is set: display GUI with parameters set
         }
