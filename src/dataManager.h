@@ -1,5 +1,6 @@
 #pragma once
 
+#include <map>
 #include <optional>
 #include <utility> //pair
 #include <vector>
@@ -11,6 +12,8 @@
 #include <Ponca/SpatialPartitioning>
 
 #include "poncaTypes.h"
+#include "drawingPasses/distanceField.h"
+#include "drawingPasses/poncaFitField.h"
 
 
 #ifndef M_PI
@@ -19,39 +22,8 @@
 #endif
 #define DEFAULT_POINT_ANGLE M_PI / 2.
 
-template <typename NodeIndex, typename Scalar, int DIM, typename _AabbType = Eigen::AlignedBox<Scalar, DIM>>
-struct MyKdTreeInnerNode : public Ponca::KdTreeDefaultInnerNode<NodeIndex, Scalar, DIM> {
-    using AabbType = _AabbType;
-    AabbType m_aabb{};
-};
-//
-//template <typename Index, typename NodeIndex, typename DataPoint, typename LeafSize = Index>
-//using MyKdTreeNode = Ponca::KdTreeCustomizableNode<Index, NodeIndex, DataPoint, LeafSize,
-//        MyKdTreeInnerNode<NodeIndex, typename DataPoint::Scalar, DataPoint::Dim> >;
 
-template <typename Index, typename NodeIndex, typename DataPoint, typename LeafSize = Index>
-struct MyKdTreeNode : Ponca::KdTreeCustomizableNode<Index, NodeIndex, DataPoint, LeafSize,
-        MyKdTreeInnerNode<NodeIndex, typename DataPoint::Scalar, DataPoint::Dim>> {
-
-    using Base = Ponca::KdTreeCustomizableNode<Index, NodeIndex, DataPoint, LeafSize,
-            MyKdTreeInnerNode<NodeIndex, typename DataPoint::Scalar, DataPoint::Dim>>;
-    using AabbType  = typename Base::AabbType;
-
-    void configure_range(Index start, Index size, const AabbType &aabb)
-    {
-        Base::configure_range(start, size, aabb);
-        if (! Base::is_leaf() )
-        {
-            Base::getAsInner().m_aabb = aabb;
-        }
-    }
-    [[nodiscard]] inline std::optional<AabbType> getAabb() const {
-        if (! Base::is_leaf())
-            return Base::getAsInner().m_aabb;
-        else
-            return std::optional<AabbType>();
-    }
-};
+struct DrawingPass;
 
 /// Structure holding shared data
 struct DataManager {
@@ -60,6 +32,9 @@ public:
     using KdTree = Ponca::KdTreeDenseBase<Ponca::KdTreeDefaultTraits<DataPoint,MyKdTreeNode>>;
     using PointContainer  = std::vector<nanogui::Vector3f>; // stores x,y,normal angle in radians
     using VectorType = typename KdTree::VectorType;
+
+    DataManager();
+    ~DataManager();
 
     /// Read access to point collection
     inline const KdTree& getKdTree() const { return m_tree; }
@@ -95,9 +70,52 @@ public:
     /// \param Number of neighbors (3 means current point and 2 closest points: left and right)
     void computeNormals(int k = 3);
 
+    /// Names of the supported drawing passes
+    static constexpr size_t nbSupportedDrawingPasses = 5;
+    const std::map<const std::string, size_t> supportedDrawingPasses {
+                    {"Distance Field", 0},
+                    {"Plane", 1},
+                    {"Sphere", 2},
+                    {"Oriented Sphere", 3},
+                    {"Unoriented Sphere", 4}
+            };
+
+    DrawingPass* getDrawingPass(const std::string& name);
+
+    /// Build a a drawing pass
+    /// \param index of the pass name in supportedDrawingPasses
+    DrawingPass* getDrawingPass(size_t index);
+
+    template <typename Functor>
+    bool processPass(int index, Functor f) {
+        switch (index) {
+            case 0: //Distance Field
+                f(dynamic_cast<DistanceFieldWithKdTree*>(getDrawingPass(0)));
+                break;
+            case 1: // Plane
+                f(dynamic_cast<PlaneFitField*>(getDrawingPass(1)));
+                break;
+            case 2: // Sphere
+                f(dynamic_cast<SphereFitField*>(getDrawingPass(2)));
+                break;
+            case 3: // Oriented Sphere
+                f(dynamic_cast<OrientedSphereFitField*>(getDrawingPass(3)));
+                break;
+            case 4: // Unoriented Sphere
+                f(dynamic_cast<UnorientedSphereFitField*>(getDrawingPass(4)));
+                break;
+            default:
+                return false;
+        }
+        return true;
+    }
+
+
 private:
     PointContainer m_points;
     KdTree m_tree;
     std::function<void()> m_updateFunction {[](){}};
+
+    std::array<DrawingPass*,nbSupportedDrawingPasses> m_drawingPasses;
 };
 
