@@ -142,6 +142,15 @@ DataManager::getDrawingPass(size_t index){
             case 4: // Unoriented Sphere
                 *p = new UnorientedSphereFitField();
                 break;
+            case 5: // Best Plane
+                *p = new BestPlaneFitField();
+                break;
+            case 6: // Best Sphere
+                *p = new BestSphereFitField();
+                break;
+            case 7: // Best Oriented Sphere
+                *p = new BestOrientedSphereFitField();
+                break;
             default:
                 break;
         }

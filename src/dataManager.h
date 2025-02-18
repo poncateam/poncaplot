@@ -12,6 +12,7 @@
 #include <Ponca/SpatialPartitioning>
 
 #include "poncaTypes.h"
+#include "drawingPasses/bestFieldFit.h"
 #include "drawingPasses/distanceField.h"
 #include "drawingPasses/poncaFitField.h"
 
@@ -71,13 +72,16 @@ public:
     void computeNormals(int k = 3);
 
     /// Names of the supported drawing passes
-    static constexpr size_t nbSupportedDrawingPasses = 5;
+    static constexpr size_t nbSupportedDrawingPasses = 8;
     const std::map<const std::string, size_t> supportedDrawingPasses {
                     {"Distance Field", 0},
-                    {"Plane", 1},
-                    {"Sphere", 2},
-                    {"Oriented Sphere", 3},
-                    {"Unoriented Sphere", 4}
+                    {"MLS - Plane", 1},
+                    {"MLS - Sphere", 2},
+                    {"MLS - Oriented Sphere", 3},
+                    {"MLS - Unoriented Sphere", 4},
+                    {"Best Fit - Plane", 5},
+                    {"Best Fit - Sphere", 6},
+                    {"Best Fit - Oriented Sphere", 7}
             };
 
     DrawingPass* getDrawingPass(const std::string& name);
@@ -103,6 +107,15 @@ public:
                 break;
             case 4: // Unoriented Sphere
                 f(dynamic_cast<UnorientedSphereFitField*>(getDrawingPass(4)));
+                break;
+            case 5: // Best Plane
+                f(dynamic_cast<BestPlaneFitField*>(getDrawingPass(5)));
+                break;
+            case 6: // Best Sphere
+                f(dynamic_cast<BestSphereFitField*>(getDrawingPass(6)));
+                break;
+            case 7: // Best Oriented Sphere
+                f(dynamic_cast<BestOrientedSphereFitField*>(getDrawingPass(7)));
                 break;
             default:
                 return false;

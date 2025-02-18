@@ -37,7 +37,7 @@ Screen(Vector2i(1200, 1024), "PoncaPlot"), m_dataMgr(mgr){
         m_dataMgr->getDrawingPass(i);
 
     m_passes[0] = new FillPass( {1,1,1,1});
-    m_passes[1] = m_dataMgr->getDrawingPass("Oriented Sphere");
+    m_passes[1] = m_dataMgr->getDrawingPass("MLS - Oriented Sphere");
     m_passes[2] = new ColorMap({1,1,1,1});
     m_passes[3] = new DisplayPoint({0,0,0,1});
 
@@ -133,10 +133,10 @@ Screen(Vector2i(1200, 1024), "PoncaPlot"), m_dataMgr(mgr){
         new nanogui::Label(distanceFieldWidget, "no parameter available");
     }
 
-    passPlaneFit = dynamic_cast<BaseFitField*>(m_dataMgr->getDrawingPass("Plane"));
-    passSphereFit = dynamic_cast<BaseFitField*>(m_dataMgr->getDrawingPass("Sphere"));
-    passOrientedSphereFit = dynamic_cast<BaseFitField*>(m_dataMgr->getDrawingPass("Oriented Sphere"));
-    passUnorientedSphereFit = dynamic_cast<BaseFitField*>(m_dataMgr->getDrawingPass("Unoriented Sphere"));
+    passPlaneFit = dynamic_cast<BaseFitField*>(m_dataMgr->getDrawingPass("MLS - Plane"));
+    passSphereFit = dynamic_cast<BaseFitField*>(m_dataMgr->getDrawingPass("MLS - Sphere"));
+    passOrientedSphereFit = dynamic_cast<BaseFitField*>(m_dataMgr->getDrawingPass("MLS - Oriented Sphere"));
+    passUnorientedSphereFit = dynamic_cast<BaseFitField*>(m_dataMgr->getDrawingPass("MLS - Unoriented Sphere"));
 
     {
         genericFitWidget = new nanogui::Widget(window);
@@ -318,6 +318,10 @@ PoncaPlotApplication::buildPassInterface(int id){
         case 4:
             genericFitWidget->set_visible(true);
             unorientedSphereFitWidget->set_visible(true);
+            break;
+        case 5:
+        case 6:
+        case 7:
             break;
         default: throw std::runtime_error("Unknown Field type!");
     }
