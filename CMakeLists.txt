@@ -62,6 +62,8 @@ add_executable( poncaplot
         src/dataManager.cpp
         src/myview.h
         src/myview.cpp
+        src/appBase.h
+        src/appBase.cpp
         src/application.h
         src/application.cpp
         src/cli.h
