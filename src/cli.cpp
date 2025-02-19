@@ -19,6 +19,7 @@ namespace poncaplot {
             struct {
                 std::string name{"Oriented Sphere"};
                 float scale{40};
+                unsigned int pointId{0};
             } fitting;
             struct {
                 std::string path{};
@@ -67,6 +68,11 @@ namespace poncaplot {
                     .help("scale size (in pixels)")
                     .scan<'g', float>()
                     .default_value(params.fitting.scale);
+            // one point fit
+            program.add_argument("-p", "--pointId")
+                    .help("point id for one point fit")
+                    .scan<'i', unsigned int>()
+                    .default_value(params.fitting.pointId);
         }
 
         // return value of the method: do we skip the GUI ?
@@ -82,6 +88,9 @@ namespace poncaplot {
                 // load fit properties
                 if (program.is_used("-f")) params.fitting.name = program.get("-f");
                 if (program.is_used("-s")) params.fitting.scale = program.get<float>("-s");
+
+                // load one point fit properties
+                if (program.is_used("-p")) params.fitting.pointId = program.get<unsigned int>("-p");
 
                 // load output properties
                 auto output = program.present("-o");
@@ -109,6 +118,9 @@ namespace poncaplot {
 
             if (auto fit = dynamic_cast<BaseFitField *>(pass)) {
                 fit->params.m_scale = params.fitting.scale;
+            }
+            if (auto fit = dynamic_cast<OnePointFitFieldBase *>(pass)) {
+                fit->pointId = params.fitting.pointId;
             }
 
             // configure renderer
