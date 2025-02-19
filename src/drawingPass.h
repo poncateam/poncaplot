@@ -83,7 +83,7 @@ struct DisplayPoint : public DrawingPass {
                     for (int v = -pLargeSize; v <= pLargeSize; ++v ) {
                         VectorType localPos {u,v};
                         int jj = j + v;
-                        if (j >= 0 && j < ctx.h) {
+                        if (jj >= 0 && jj < ctx.h) {
                             bool draw = (localPos.squaredNorm() < scaledHalfSize * scaledHalfSize)  // draw point
                                     ||  ((localPos.squaredNorm() < pLargeSize * pLargeSize)
                                          && (localPos.dot(p.normal()) > 0.f)
