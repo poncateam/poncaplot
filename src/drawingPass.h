@@ -103,7 +103,7 @@ struct DisplayPoint : public DrawingPass {
 ///       and thus must be set even if the pixel is invalid
 struct ColorMap : public DrawingPass {
     inline explicit ColorMap(const nanogui::Vector4i &isoColor = {1,1,1,1},
-                             const nanogui::Vector4i &defaultColor = {0,0,0,1})
+                             const nanogui::Vector4i &defaultColor = {1,1,1,0})
     : DrawingPass(), m_isoColor(isoColor), m_defaultColor(defaultColor) {}
 
     [[nodiscard]] inline float quantify(float in) const
@@ -131,15 +131,13 @@ struct ColorMap : public DrawingPass {
                         }
                         else if(val > 0.f)
                         {
-                            c[0] = quantify(1.f - val / maxVal);
-                            c[1] = 0;
-                            c[2] = 0;
+                            c[0] = 1.f;
+                            c[1] = c[2] = quantify(val / maxVal);
                         }
                         else
                         {
-                            c[0] = 0;
-                            c[1] = 0;
-                            c[2] = quantify(1.f - (-val / maxVal));
+                            c[0] = c[1] = quantify(- val / maxVal);
+                            c[2] = 1.f;
                         }
                         c[3] = 1;
                     }

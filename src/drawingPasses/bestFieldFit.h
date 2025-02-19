@@ -32,7 +32,7 @@ struct BestFitField : public DrawingPass {
                 for (int i = 0; i < w; ++i) {
                     auto *b = buffer + (i + j * w) * 4;
 
-                    (b[2] = fit.isStable());
+                    b[2] = ColorMap::VALUE_IS_VALID;
                     float dist = fit.potential({i, j});
                     if (std::abs(dist) > maxVal) maxVal = std::abs(dist);
 
