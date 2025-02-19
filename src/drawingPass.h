@@ -80,7 +80,7 @@ struct DisplayPoint : public DrawingPass {
                     for (int v = std::floor(-pLargeSize); v <= int(std::ceil(pLargeSize)); ++v ) {
                         VectorType localPos {u,v};
                         int jj = j + v;
-                        if (j >= 0 && j < h) {
+                        if (jj >= 0 && jj < h) {
                             bool draw = (localPos.squaredNorm() < m_halfSize * m_halfSize)  // draw point
                                     ||  ((localPos.squaredNorm() < pLargeSize * pLargeSize)
                                          && (localPos.dot(p.normal()) > 0.f)
