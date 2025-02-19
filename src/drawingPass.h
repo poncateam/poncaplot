@@ -6,6 +6,10 @@
 #include "poncaTypes.h"
 
 
+struct OnePointFitFieldBase {
+    unsigned int pointId {0};
+};
+
 struct FitParameters {
     float m_scale {40.f};
     int   m_iter  {1};

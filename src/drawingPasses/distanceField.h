@@ -61,3 +61,39 @@ struct DistanceFieldWithKdTree : public DrawingPass {
         buffer[1] = maxVal;
     }
 };
+
+// display distance field clamped by the current scale value
+struct DistanceFieldFromOnePoint : public BaseFitField, public OnePointFitFieldBase {
+    inline explicit DistanceFieldFromOnePoint() : BaseFitField(), OnePointFitFieldBase() {}
+    void render(const KdTree& points, float*buffer, int w, int h) override {
+        if(points.points().empty())
+        {
+            buffer[1] = ColorMap::NO_FIELD;
+            return;
+        }
+
+#pragma omp parallel for collapse(2) default(none) shared(points, buffer, w, h)
+        for (int j = 0; j < h; ++j ) {
+            for (int i = 0; i < w; ++i) {
+                auto *b = buffer + (i + j * w) * 4;
+
+                auto p = points.points()[pointId].pos();
+
+                int u(std::floor(p.x()));
+                int v(std::floor(p.y()));
+                auto dist = float(std::sqrt((i-u)*(i-u) + (j-v)*(j-v)));
+
+                if(dist < params.m_scale) {
+                    b[0] = dist;
+                    b[2] = ColorMap::VALUE_IS_VALID;
+                    b[3] = ColorMap::SCALAR_FIELD;
+                }
+                else {
+                    b[2] = ColorMap::VALUE_IS_INVALID;
+                }
+            }
+        }
+        buffer[1] = params.m_scale;
+        buffer[3] = ColorMap::SCALAR_FIELD;
+    }
+};

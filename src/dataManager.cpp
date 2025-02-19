@@ -141,6 +141,10 @@ DataManager::getDrawingPass(size_t index){
             WRITE_NEW_FIT_CASE(5,BestPlaneFitField)
             WRITE_NEW_FIT_CASE(6,BestSphereFitField)
             WRITE_NEW_FIT_CASE(7,BestOrientedSphereFitField)
+            WRITE_NEW_FIT_CASE(8,OnePlaneFitField)
+            WRITE_NEW_FIT_CASE(9,OneSphereFitField)
+            WRITE_NEW_FIT_CASE(10,OneOrientedSphereFitField)
+            WRITE_NEW_FIT_CASE(11,DistanceFieldFromOnePoint)
 
             default: throw std::runtime_error("Unknown Field type!");
         }

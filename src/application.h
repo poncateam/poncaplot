@@ -5,6 +5,9 @@
 // cannot forward declare aliases
 #include "drawingPasses/poncaFitField.h"
 
+
+#include <nanogui/textbox.h>
+
 // forward declarations
 class DrawingPass;
 class DistanceFieldWithKdTree;
@@ -44,9 +47,13 @@ private:
     MyView *m_image_view {nullptr};
     Widget* pass1Widget, *distanceFieldWidget,
             *genericFitWidget,    //< parameters applicable to all fitting techniques
+            *singlePointFitWidget,//< parameters applicable to all fitting techniques for a single point
     *planeFitWidget, *sphereFitWidget, *orientedSphereFitWidget, *unorientedSphereFitWidget,
             *pass3Widget,*pass4Widget;
 
+    nanogui::IntBox<int> *pointIdSelector{nullptr};
 
-    BaseFitField* passPlaneFit, *passSphereFit, *passOrientedSphereFit, *passUnorientedSphereFit;
+    BaseFitField* passPlaneFit, *passSphereFit, *passOrientedSphereFit, *passUnorientedSphereFit,
+                 *passOnePlaneFit, *passOneSphereFit, *passOneOrientedSphereFit,
+                 *passScaleView;
 };

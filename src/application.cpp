@@ -3,16 +3,13 @@
 #include "myview.h"
 #include "dataManager.h"
 #include "drawingPass.h"
-#include "drawingPasses/distanceField.h"
 
 #include <nanogui/window.h>
 #include <nanogui/colorpicker.h>
 #include <nanogui/combobox.h>
 #include <nanogui/label.h>
 #include <nanogui/layout.h>
-#include <nanogui/textbox.h>
 #include <nanogui/slider.h>
-#include <nanogui/textbox.h>
 
 #include <nanogui/opengl.h> // GLFW_KEY_ESCAPE and others
 
@@ -58,6 +55,7 @@ Screen(Vector2i(1200, 1024), "PoncaPlot"), m_dataMgr(mgr){
                      {"txt", "Text file x y nx y"}}, false);
             std::cout << "Load file from: " << path << std::endl;
             m_dataMgr->loadPointCloud(path);
+            pointIdSelector->set_max_value(m_dataMgr->getPointContainer().size()-1);
         });
         b = new Button(tools, "Save point cloud");
         b->set_callback([&] {
@@ -137,6 +135,10 @@ Screen(Vector2i(1200, 1024), "PoncaPlot"), m_dataMgr(mgr){
     passSphereFit = dynamic_cast<BaseFitField*>(m_dataMgr->getDrawingPass("MLS - Sphere"));
     passOrientedSphereFit = dynamic_cast<BaseFitField*>(m_dataMgr->getDrawingPass("MLS - Oriented Sphere"));
     passUnorientedSphereFit = dynamic_cast<BaseFitField*>(m_dataMgr->getDrawingPass("MLS - Unoriented Sphere"));
+    passOnePlaneFit = dynamic_cast<BaseFitField*>(m_dataMgr->getDrawingPass("One Fit - Plane"));
+    passOneSphereFit = dynamic_cast<BaseFitField*>(m_dataMgr->getDrawingPass("One Fit - Sphere"));
+    passOneOrientedSphereFit = dynamic_cast<BaseFitField*>(m_dataMgr->getDrawingPass("One Fit - Oriented Sphere"));
+    passScaleView = dynamic_cast<BaseFitField*>(m_dataMgr->getDrawingPass("One Point - Scale"));
 
     {
         genericFitWidget = new nanogui::Widget(window);
@@ -151,6 +153,10 @@ Screen(Vector2i(1200, 1024), "PoncaPlot"), m_dataMgr(mgr){
             passSphereFit->params.m_scale = value;
             passOrientedSphereFit->params.m_scale = value;
             passUnorientedSphereFit->params.m_scale = value;
+            passOnePlaneFit->params.m_scale = value;
+            passOneSphereFit->params.m_scale = value;
+            passOneOrientedSphereFit->params.m_scale = value;
+            passScaleView->params.m_scale = value;
             renderPasses();
         });
 
@@ -166,6 +172,29 @@ Screen(Vector2i(1200, 1024), "PoncaPlot"), m_dataMgr(mgr){
             passSphereFit->params.m_iter = value;
             passOrientedSphereFit->params.m_iter = value;
             passUnorientedSphereFit->params.m_iter = value;
+            passOnePlaneFit->params.m_iter = value;
+            passOneSphereFit->params.m_iter = value;
+            passOneOrientedSphereFit->params.m_iter = value;
+            renderPasses();
+        });
+    }
+
+    {
+        singlePointFitWidget = new nanogui::Widget(window);
+        singlePointFitWidget->set_layout(new GroupLayout());
+        new nanogui::Label(singlePointFitWidget, "Evaluation Point", "sans-bold");
+        new nanogui::Label(singlePointFitWidget, "Id");
+        pointIdSelector = new IntBox<int>(singlePointFitWidget, 0);
+        pointIdSelector->set_editable(true);
+        pointIdSelector->set_spinnable(true);
+        pointIdSelector->set_min_value(0);
+        pointIdSelector->set_max_value(m_dataMgr->getPointContainer().size());
+        pointIdSelector->set_value_increment(1);
+        pointIdSelector->set_callback([&](int value) {
+            dynamic_cast<OnePointFitFieldBase*>(passOnePlaneFit)->pointId = value;
+            dynamic_cast<OnePointFitFieldBase*>(passOneSphereFit)->pointId = value;
+            dynamic_cast<OnePointFitFieldBase*>(passOneOrientedSphereFit)->pointId = value;
+            dynamic_cast<OnePointFitFieldBase*>(passScaleView)->pointId = value;
             renderPasses();
         });
     }
@@ -295,6 +324,7 @@ void
 PoncaPlotApplication::buildPassInterface(int id){
     distanceFieldWidget->set_visible(false);
     genericFitWidget->set_visible(false);
+    singlePointFitWidget->set_visible(false);
     planeFitWidget->set_visible(false);
     sphereFitWidget->set_visible(false);
     orientedSphereFitWidget->set_visible(false);
@@ -322,6 +352,13 @@ PoncaPlotApplication::buildPassInterface(int id){
         case 5:
         case 6:
         case 7:
+            break;
+        case 8:
+        case 9:
+        case 10:
+        case 11:
+            genericFitWidget->set_visible(true);
+            singlePointFitWidget->set_visible(true);
             break;
         default: throw std::runtime_error("Unknown Field type!");
     }

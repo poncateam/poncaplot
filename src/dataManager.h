@@ -72,7 +72,7 @@ public:
     void computeNormals(int k = 3);
 
     /// Names of the supported drawing passes
-    static constexpr size_t nbSupportedDrawingPasses = 8;
+    static constexpr size_t nbSupportedDrawingPasses = 12;
     const std::map<const std::string, size_t> supportedDrawingPasses {
                     {"Distance Field", 0},
                     {"MLS - Plane", 1},
@@ -81,7 +81,11 @@ public:
                     {"MLS - Unoriented Sphere", 4},
                     {"Best Fit - Plane", 5},
                     {"Best Fit - Sphere", 6},
-                    {"Best Fit - Oriented Sphere", 7}
+                    {"Best Fit - Oriented Sphere", 7},
+                    {"One Fit - Plane", 8},
+                    {"One Fit - Sphere", 9},
+                    {"One Fit - Oriented Sphere", 10},
+                    {"One Point - Scale", 11}
             };
 
     DrawingPass* getDrawingPass(const std::string& name);
@@ -106,6 +110,10 @@ public:
             WRITE_FIT_CASE(5,BestPlaneFitField)
             WRITE_FIT_CASE(6,BestSphereFitField)
             WRITE_FIT_CASE(7,BestOrientedSphereFitField)
+            WRITE_FIT_CASE(8,OnePlaneFitField)
+            WRITE_FIT_CASE(9,OneSphereFitField)
+            WRITE_FIT_CASE(10,OneOrientedSphereFitField)
+            WRITE_FIT_CASE(11,DistanceFieldFromOnePoint)
             default: return false;
         }
         return true;

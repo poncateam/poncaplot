@@ -76,3 +76,45 @@ struct BestOrientedSphereFitField : public BestFitField<ConstOrientedSphereFit>{
     void postProcess(typename BestFitField<ConstOrientedSphereFit>::FitType& fit) override { fit.applyPrattNorm(); };
 };
 
+
+// Fit a primitive to single point of the point cloud
+template <typename _FitType>
+struct OnePointFitField : public SingleFitField<_FitType, BaseFitField>, public OnePointFitFieldBase {
+    inline explicit OnePointFitField() : SingleFitField<_FitType, BaseFitField> (), OnePointFitFieldBase() {}
+    ~OnePointFitField() override = default;
+
+    using FitType     = _FitType;
+    using WeightFunc = typename FitType::WeightFunction;
+    using Scalar     = typename FitType::Scalar;
+
+    /// Method called at the end of the fitting process, only for stable fits
+    virtual void postProcess(FitType& /*fit*/){};
+
+    inline void configureAndFit(const KdTree& points, FitType& fit) override {
+        // Configure computation to be centered on the point cloud coordinates
+        fit.setWeightFunc(WeightFunc(BaseFitField::params.m_scale));
+        auto query = points.points()[pointId].pos();
+        // Compute fit
+        for (int iter = 0; iter != BaseFitField::params.m_iter; ++iter) {
+            fit.init(query);
+            if (fit.computeWithIds(points.range_neighbors(query, BaseFitField::params.m_scale), points.points()) ==
+                Ponca::STABLE) {
+                postProcess(fit);
+                query = fit.project(query);
+            }
+            else{
+                std::cerr << "MLS iteration failed" << std::endl;
+            }
+        }
+    }
+};
+
+using OnePlaneFitField = OnePointFitField<ConstPlaneFit>;
+
+struct OneSphereFitField : public OnePointFitField<ConstSphereFit>{
+    void postProcess(typename OnePointFitField<ConstSphereFit>::FitType& fit) override { fit.applyPrattNorm(); };
+};
+
+struct OneOrientedSphereFitField : public OnePointFitField<ConstOrientedSphereFit>{
+    void postProcess(typename OnePointFitField<ConstOrientedSphereFit>::FitType& fit) override { fit.applyPrattNorm(); };
+};
