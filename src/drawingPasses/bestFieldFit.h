@@ -1,29 +1,25 @@
 #pragma once
 #include "../drawingPass.h"
+#include "poncaFitField.h"
 
-// Fit a unique primitive to the entire point cloud
-template <typename _FitType>
-struct BestFitField : public DrawingPass {
-    inline explicit BestFitField() : DrawingPass() {}
-    ~BestFitField() override = default;
+// Base class to fit a unique primitive
+template <typename _FitType, typename _Base>
+struct SingleFitField : public _Base {
+    inline explicit SingleFitField() : _Base() {}
+    ~SingleFitField() override = default;
 
+    using Base = _Base;
     using FitType = _FitType;
     using WeightFunc = typename FitType::WeightFunction;
 
-    /// Method called at the end of the fitting process, only for stable fits
-    virtual void postProcess(FitType& /*fit*/){};
+    virtual void configureAndFit(const KdTree& points, FitType& fit) = 0;
 
     void render(const KdTree& points, float*buffer, int w, int h) override{
         if(points.points().empty()) return;
 
         //Fit on all points
         FitType fit;
-        // Configure computation to be centered on the point cloud coordinates
-        fit.setWeightFunc(WeightFunc(points.nodes()[0].getAabb()->diagonal().norm()));
-        fit.init(points.nodes()[0].getAabb()->center());
-        // Compute fit
-        fit.compute(points.points());
-        postProcess(fit);
+        configureAndFit(points, fit);
 
         float maxVal = 0;
         if (fit.isStable()) {
@@ -47,6 +43,28 @@ struct BestFitField : public DrawingPass {
     }
 };
 
+
+// Fit a unique primitive to the entire point cloud
+template <typename _FitType>
+struct BestFitField : public SingleFitField<_FitType, DrawingPass> {
+    inline explicit BestFitField() : SingleFitField<_FitType, DrawingPass> () {}
+    ~BestFitField() override = default;
+
+    using FitType = _FitType;
+    using WeightFunc = typename FitType::WeightFunction;
+
+    /// Method called at the end of the fitting process, only for stable fits
+    virtual void postProcess(FitType& /*fit*/){};
+
+    inline void configureAndFit(const KdTree& points, FitType& fit) override {
+        // Configure computation to be centered on the point cloud coordinates
+        fit.setWeightFunc(WeightFunc(points.nodes()[0].getAabb()->diagonal().norm()));
+        fit.init(points.nodes()[0].getAabb()->center());
+        // Compute fit
+        fit.compute(points.points());
+        postProcess(fit);
+    }
+};
 
 using BestPlaneFitField = BestFitField<ConstPlaneFit>;
 

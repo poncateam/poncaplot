@@ -3,12 +3,6 @@
 #include "../drawingPass.h"
 #include "../poncaTypes.h"
 
-struct BaseFitField : public DrawingPass{
-    inline explicit BaseFitField() : DrawingPass() {}
-    ~BaseFitField() override = default;
-    float m_scale {40.f};
-    int   m_iter  {1};
-};
 
 template <typename _FitType>
 struct FitField : public BaseFitField {
@@ -33,12 +27,12 @@ struct FitField : public BaseFitField {
 
                 FitType fit;
                 // Set a weighting function instance
-                fit.setWeightFunc(WeightFunc(m_scale));
+                fit.setWeightFunc(WeightFunc(params.m_scale));
                 // Set the evaluation position
-                for (int iter = 0; iter != m_iter; ++iter) {
+                for (int iter = 0; iter != params.m_iter; ++iter) {
                     fit.init(query);
                     // Fit plane (method compute handles multipass fitting
-                    if (fit.computeWithIds(points.range_neighbors(query, m_scale), points.points()) ==
+                    if (fit.computeWithIds(points.range_neighbors(query, params.m_scale), points.points()) ==
                         Ponca::STABLE) {
                         query = fit.project(query);
                     }

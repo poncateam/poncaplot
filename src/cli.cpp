@@ -122,7 +122,7 @@ PoncaPlotCLI::run(int argc, char **argv) {
         auto pass = m_dataMgr->getDrawingPass(params.fitting.name);
 
         if( auto fit = dynamic_cast<BaseFitField*>(pass) ) {
-            fit->m_scale = params.fitting.scale;
+            fit->params.m_scale = params.fitting.scale;
         }
 
         // configure renderer

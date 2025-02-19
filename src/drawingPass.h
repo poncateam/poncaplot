@@ -6,10 +6,21 @@
 #include "poncaTypes.h"
 
 
+struct FitParameters {
+    float m_scale {40.f};
+    int   m_iter  {1};
+};
+
 /// Base class to rendering processes
 struct DrawingPass {
     virtual void render(const KdTree& points, float*buffer, int w, int h) = 0;
     virtual ~DrawingPass() = default;
+};
+
+struct BaseFitField : public DrawingPass{
+    inline explicit BaseFitField() : DrawingPass() {}
+    ~BaseFitField() override = default;
+    FitParameters params;
 };
 
 struct FillPass : public DrawingPass {

@@ -144,28 +144,28 @@ Screen(Vector2i(1200, 1024), "PoncaPlot"), m_dataMgr(mgr){
         new nanogui::Label(genericFitWidget, "Local Fitting", "sans-bold");
         new nanogui::Label(genericFitWidget, "Scale");
         auto slider = new Slider(genericFitWidget);
-        slider->set_value(passPlaneFit->m_scale); // init with plane, but sync with current.
+        slider->set_value(passPlaneFit->params.m_scale); // init with plane, but sync with current.
         slider->set_range({5,200});
         slider->set_callback([&](float value) {
-            passPlaneFit->m_scale = value;
-            passSphereFit->m_scale = value;
-            passOrientedSphereFit->m_scale = value;
-            passUnorientedSphereFit->m_scale = value;
+            passPlaneFit->params.m_scale = value;
+            passSphereFit->params.m_scale = value;
+            passOrientedSphereFit->params.m_scale = value;
+            passUnorientedSphereFit->params.m_scale = value;
             renderPasses();
         });
 
         new Label(genericFitWidget, "MLS Iterations :", "sans-bold");
-        auto int_box = new IntBox<int>(genericFitWidget, passPlaneFit->m_iter);
+        auto int_box = new IntBox<int>(genericFitWidget, passPlaneFit->params.m_iter);
         int_box->set_editable(true);
         int_box->set_spinnable(true);
         int_box->set_min_value(1);
         int_box->set_max_value(10);
         int_box->set_value_increment(1);
         int_box->set_callback([&](int value) {
-            passPlaneFit->m_iter = value;
-            passSphereFit->m_iter = value;
-            passOrientedSphereFit->m_iter = value;
-            passUnorientedSphereFit->m_iter = value;
+            passPlaneFit->params.m_iter = value;
+            passSphereFit->params.m_iter = value;
+            passOrientedSphereFit->params.m_iter = value;
+            passUnorientedSphereFit->params.m_iter = value;
             renderPasses();
         });
     }
