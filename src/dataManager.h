@@ -90,38 +90,28 @@ public:
     /// \param index of the pass name in supportedDrawingPasses
     DrawingPass* getDrawingPass(size_t index);
 
+#define WRITE_FIT_CASE(ID,FTYPE) \
+    case ID:                 \
+        f(dynamic_cast<FTYPE*>(getDrawingPass(ID))); \
+        break;
+
     template <typename Functor>
     bool processPass(int index, Functor f) {
         switch (index) {
-            case 0: //Distance Field
-                f(dynamic_cast<DistanceFieldWithKdTree*>(getDrawingPass(0)));
-                break;
-            case 1: // Plane
-                f(dynamic_cast<PlaneFitField*>(getDrawingPass(1)));
-                break;
-            case 2: // Sphere
-                f(dynamic_cast<SphereFitField*>(getDrawingPass(2)));
-                break;
-            case 3: // Oriented Sphere
-                f(dynamic_cast<OrientedSphereFitField*>(getDrawingPass(3)));
-                break;
-            case 4: // Unoriented Sphere
-                f(dynamic_cast<UnorientedSphereFitField*>(getDrawingPass(4)));
-                break;
-            case 5: // Best Plane
-                f(dynamic_cast<BestPlaneFitField*>(getDrawingPass(5)));
-                break;
-            case 6: // Best Sphere
-                f(dynamic_cast<BestSphereFitField*>(getDrawingPass(6)));
-                break;
-            case 7: // Best Oriented Sphere
-                f(dynamic_cast<BestOrientedSphereFitField*>(getDrawingPass(7)));
-                break;
-            default:
-                return false;
+            WRITE_FIT_CASE(0,DistanceFieldWithKdTree)
+            WRITE_FIT_CASE(1,PlaneFitField)
+            WRITE_FIT_CASE(2,SphereFitField)
+            WRITE_FIT_CASE(3,OrientedSphereFitField)
+            WRITE_FIT_CASE(4,UnorientedSphereFitField)
+            WRITE_FIT_CASE(5,BestPlaneFitField)
+            WRITE_FIT_CASE(6,BestSphereFitField)
+            WRITE_FIT_CASE(7,BestOrientedSphereFitField)
+            default: return false;
         }
         return true;
     }
+
+#undef WRITE_FIT_CASE
 
 
 private:
