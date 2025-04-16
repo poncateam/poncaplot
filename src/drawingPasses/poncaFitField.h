@@ -15,14 +15,14 @@ struct FitField : public BaseFitField {
     /// Method called at the end of the fitting process, only for stable fits
     virtual void postProcess(FitType& /*fit*/){};
 
-    void render(const KdTree& points, float*buffer, int w, int h) override{
+    void render(const KdTree& points, float*buffer, RenderingContext ctx) override{
         if(points.points().empty()) return;
 
         float maxVal = 0;
-#pragma omp parallel for collapse(2) default(none) shared(points, buffer, w, h) reduction(max : maxVal)
-        for (int j = 0; j < h; ++j ) {
-            for (int i = 0; i < w; ++i) {
-                auto *b = buffer + (i + j * w) * 4;
+#pragma omp parallel for collapse(2) default(none) shared(points, buffer, ctx) reduction(max : maxVal)
+        for (int j = 0; j < ctx.h; ++j ) {
+            for (int i = 0; i < ctx.w; ++i) {
+                auto *b = buffer + (i + j * ctx.w) * 4;
                 DataPoint::VectorType query (i, j);
 
                 FitType fit;

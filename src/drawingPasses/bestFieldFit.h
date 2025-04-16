@@ -14,7 +14,7 @@ struct SingleFitField : public _Base {
 
     virtual void configureAndFit(const KdTree& points, FitType& fit) = 0;
 
-    void render(const KdTree& points, float*buffer, int w, int h) override{
+    void render(const KdTree& points, float*buffer, RenderingContext ctx) override{
         if(points.points().empty()) return;
 
         //Fit on all points
@@ -23,10 +23,10 @@ struct SingleFitField : public _Base {
 
         float maxVal = 0;
         if (fit.isStable()) {
-#pragma omp parallel for collapse(2) default(none) shared(points, buffer, w, h,fit) reduction(max : maxVal)
-            for (int j = 0; j < h; ++j) {
-                for (int i = 0; i < w; ++i) {
-                    auto *b = buffer + (i + j * w) * 4;
+#pragma omp parallel for collapse(2) default(none) shared(points, buffer, ctx,fit) reduction(max : maxVal)
+            for (int j = 0; j < ctx.h; ++j) {
+                for (int i = 0; i < ctx.w; ++i) {
+                    auto *b = buffer + (i + j * ctx.w) * 4;
 
                     b[2] = ColorMap::VALUE_IS_VALID;
                     float dist = fit.potential({i, j});

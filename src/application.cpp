@@ -386,7 +386,7 @@ namespace poncaplot {
         std::cout << "[Main] Update texture" << std::endl;
         const auto &points = m_dataMgr->getKdTree();
         for (auto *p: m_passes) {
-            p->render(points, m_computeInPing ? m_textureBufferPing : m_textureBufferPong, tex_width, tex_height);
+            p->render(points, m_computeInPing ? m_textureBufferPing : m_textureBufferPong, {tex_width, tex_height});
         }
 
         m_computeInPing = !m_computeInPing;

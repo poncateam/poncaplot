@@ -122,7 +122,7 @@ namespace poncaplot {
             std::cout << "Render" << std::endl;
             const auto &points = m_dataMgr->getKdTree();
             for (auto *p: renderPasses) {
-                p->render(points, texture, int(params.output.width), int(params.output.height));
+                p->render(points, texture, {params.output.width, params.output.height});
             }
 
             std::cout << "Save image" << std::endl;

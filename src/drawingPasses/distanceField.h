@@ -4,7 +4,7 @@
 
 struct DistanceField : public DrawingPass {
     inline explicit DistanceField() : DrawingPass() {}
-    void render(const KdTree& points, float*buffer, int w, int h) override {
+    void render(const KdTree& points, float*buffer, RenderingContext ctx) override {
         if(points.points().empty())
         {
             buffer[1] = ColorMap::NO_FIELD;
@@ -12,11 +12,11 @@ struct DistanceField : public DrawingPass {
         }
 
         float maxVal = 0;
-#pragma omp parallel for collapse(2) default(none) shared(points, buffer, w, h) reduction(max : maxVal)
-        for (int j = 0; j < h; ++j ) {
-            for (int i = 0; i < w; ++i) {
-                auto *b = buffer + (i + j * w) * 4;
-                float minDist {float(w*h)};  //distance should necessarily be smaller
+#pragma omp parallel for collapse(2) default(none) shared(points, buffer, ctx) reduction(max : maxVal)
+        for (int j = 0; j < ctx.h; ++j ) {
+            for (int i = 0; i < ctx.w; ++i) {
+                auto *b = buffer + (i + j * ctx.w) * 4;
+                float minDist {float(ctx.w*ctx.h)};  //distance should necessarily be smaller
                 for (const auto &p : points.points()) {
                     int u(std::floor(p.pos().x()));
                     int v(std::floor(p.pos().y()));
@@ -34,7 +34,7 @@ struct DistanceField : public DrawingPass {
 };
 struct DistanceFieldWithKdTree : public DrawingPass {
     inline explicit DistanceFieldWithKdTree() : DrawingPass() {}
-    void render(const KdTree& points, float*buffer, int w, int h) override{
+    void render(const KdTree& points, float*buffer, RenderingContext ctx) override{
         if(points.points().empty())
         {
             buffer[1] = ColorMap::NO_FIELD;
@@ -42,10 +42,10 @@ struct DistanceFieldWithKdTree : public DrawingPass {
         }
 
         float maxVal = 0;
-#pragma omp parallel for collapse(2) default(none) shared(points, buffer, w, h) reduction(max : maxVal)
-        for (int j = 0; j < h; ++j ) {
-            for (int i = 0; i < w; ++i) {
-                auto *b = buffer + (i + j * w) * 4;
+#pragma omp parallel for collapse(2) default(none) shared(points, buffer, ctx) reduction(max : maxVal)
+        for (int j = 0; j < ctx.h; ++j ) {
+            for (int i = 0; i < ctx.w; ++i) {
+                auto *b = buffer + (i + j * ctx.w) * 4;
                 DataPoint::VectorType query (i, j);
                 auto res = points.nearest_neighbor( query );
                 if(res.begin()!=res.end()) {
@@ -65,17 +65,17 @@ struct DistanceFieldWithKdTree : public DrawingPass {
 // display distance field clamped by the current scale value
 struct DistanceFieldFromOnePoint : public BaseFitField, public OnePointFitFieldBase {
     inline explicit DistanceFieldFromOnePoint() : BaseFitField(), OnePointFitFieldBase() {}
-    void render(const KdTree& points, float*buffer, int w, int h) override {
+    void render(const KdTree& points, float*buffer, RenderingContext ctx) override {
         if(points.points().empty())
         {
             buffer[1] = ColorMap::NO_FIELD;
             return;
         }
 
-#pragma omp parallel for collapse(2) default(none) shared(points, buffer, w, h)
-        for (int j = 0; j < h; ++j ) {
-            for (int i = 0; i < w; ++i) {
-                auto *b = buffer + (i + j * w) * 4;
+#pragma omp parallel for collapse(2) default(none) shared(points, buffer, ctx)
+        for (int j = 0; j < ctx.h; ++j ) {
+            for (int i = 0; i < ctx.w; ++i) {
+                auto *b = buffer + (i + j * ctx.w) * 4;
 
                 auto p = points.points()[pointId].pos();
 

@@ -3,6 +3,7 @@
 #include <random>
 #include <iostream>
 
+#include "contexts.h"
 #include "poncaTypes.h"
 
 
@@ -17,7 +18,7 @@ struct FitParameters {
 
 /// Base class to rendering processes
 struct DrawingPass {
-    virtual void render(const KdTree& points, float*buffer, int w, int h) = 0;
+    virtual void render(const KdTree& points, float*buffer, RenderingContext ctx) = 0;
     virtual ~DrawingPass() = default;
 };
 
@@ -30,9 +31,9 @@ struct BaseFitField : public DrawingPass{
 struct FillPass : public DrawingPass {
     inline explicit FillPass(const nanogui::Vector4f &fillColor = {1,1,1,1})
             : m_fillColor(fillColor) {}
-    void render(const KdTree& /*points*/, float*buffer, int w, int h) override{
-#pragma omp parallel for default(none) shared(buffer, w, h)
-        for(auto j = 0; j<w*h; ++j){
+    void render(const KdTree& /*points*/, float*buffer, RenderingContext ctx) override{
+#pragma omp parallel for default(none) shared(buffer, ctx)
+        for(auto j = 0; j<ctx.w*ctx.h; ++j){
             buffer[j*4] = m_fillColor.x();
             buffer[j*4+1] = m_fillColor.y();
             buffer[j*4+2] = m_fillColor.z();
@@ -44,10 +45,10 @@ struct FillPass : public DrawingPass {
 
 struct RandomPass : public DrawingPass {
     inline explicit RandomPass() : DrawingPass(), gen(rd()) {}
-    void render(const KdTree& /*points*/, float*buffer, int w, int h) override{
-#pragma omp parallel for default(none) shared(buffer, w, h)
-        for(auto j = 0; j<w*h; ++j){
-            float grad = float(j)/float(w*h);
+    void render(const KdTree& /*points*/, float*buffer, RenderingContext ctx) override{
+#pragma omp parallel for default(none) shared(buffer, ctx)
+        for(auto j = 0; j<ctx.w*ctx.h; ++j){
+            float grad = float(j)/float(ctx.w*ctx.h);
             buffer[j*4] = grad;
             buffer[j*4+1] = grad;
             buffer[j*4+2] = grad;
@@ -64,10 +65,10 @@ private:
 struct DisplayPoint : public DrawingPass {
     inline explicit DisplayPoint(const nanogui::Vector4i &pointColor = {0,0,0,1})
             : DrawingPass(), m_pointColor(pointColor) {}
-    void render(const KdTree& points, float*buffer, int w, int h) override{
+    void render(const KdTree& points, float*buffer, RenderingContext ctx) override{
         using VectorType = typename KdTree::VectorType;
         const auto pLargeSize = 2.f*m_halfSize;
-#pragma omp parallel for default(none) shared(points, buffer, w, h,pLargeSize)
+#pragma omp parallel for default(none) shared(points, buffer, ctx, pLargeSize)
         for (int pid = 0; pid< points.point_count(); ++pid){
             const auto& p = points.points()[pid];
             // Build vector that is orthogonal to the normal vector
@@ -76,11 +77,11 @@ struct DisplayPoint : public DrawingPass {
             int j (std::floor(p.pos().y()));
             for (int u = std::floor(-pLargeSize); u <= int(std::ceil(pLargeSize)); ++u ){
                 int ii = i+u;
-                if(ii>=0 && ii<w){
+                if(ii>=0 && ii<ctx.w){
                     for (int v = std::floor(-pLargeSize); v <= int(std::ceil(pLargeSize)); ++v ) {
                         VectorType localPos {u,v};
                         int jj = j + v;
-                        if (j >= 0 && j < h) {
+                        if (j >= 0 && j < ctx.h) {
                             bool draw = (localPos.squaredNorm() < m_halfSize * m_halfSize)  // draw point
                                     ||  ((localPos.squaredNorm() < pLargeSize * pLargeSize)
                                          && (localPos.dot(p.normal()) > 0.f)
@@ -88,7 +89,7 @@ struct DisplayPoint : public DrawingPass {
                                          ) // draw normal
                                     ;
                             if (draw) {
-                                auto *b = buffer + (ii + jj * w) * 4;
+                                auto *b = buffer + (ii + jj * ctx.w) * 4;
                                 b[0] = m_pointColor[0];
                                 b[1] = m_pointColor[1];
                                 b[2] = m_pointColor[2];
@@ -124,14 +125,14 @@ struct ColorMap : public DrawingPass {
     [[nodiscard]] inline float quantify(float in) const
     { return float(std::floor(in * float(m_isoQuantifyNumber)) / float(m_isoQuantifyNumber)); }
 
-    void render(const KdTree& points, float*buffer, int w, int h) override{
+    void render(const KdTree& points, float*buffer, RenderingContext ctx) override{
         const FieldType ftype {int(buffer[3])};
         const auto maxVal = buffer[1];
 
         if (ftype == NO_FIELD) return;
 
-#pragma omp parallel for default(none) shared(buffer, w, h, ftype, maxVal)
-        for(auto j = 0; j<w*h; ++j){
+#pragma omp parallel for default(none) shared(buffer, ctx, ftype, maxVal)
+        for(auto j = 0; j<ctx.w*ctx.h; ++j){
             auto *b = buffer + j * 4;
             auto val = b[0];
             nanogui::Vector4f c =  m_defaultColor;
