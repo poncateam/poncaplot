@@ -104,7 +104,7 @@ struct DisplayPoint : public DrawingPass {
         }
     }
     nanogui::Vector4f m_pointColor;
-    float m_halfSize{1.f};
+    float m_halfSize{3.f};
 };
 
 
