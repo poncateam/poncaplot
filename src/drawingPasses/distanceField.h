@@ -90,6 +90,11 @@ struct DistanceFieldFromOnePoint : public BaseFitField, public OnePointFitFieldB
                     b[2] = ColorMap::VALUE_IS_VALID;
                     b[3] = ColorMap::SCALAR_FIELD;
                 }
+                else if (dist < params.m_scale + 0.5) {
+                    b[0] = dist;
+                    b[2] = ColorMap::VALUE_IS_BORDER;
+                    b[3] = ColorMap::SCALAR_FIELD;
+                }
                 else {
                     b[2] = ColorMap::VALUE_IS_INVALID;
                 }
