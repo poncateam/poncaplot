@@ -141,27 +141,30 @@ struct ColorMap : public DrawingPass {
 
             switch (ftype) {
                 case SCALAR_FIELD: {
-                    if( FieldValueType(b[2]) )
-                    {
-                        if(std::abs(val) < m_isoWidth)
-                        {
-                            c = m_isoColor;
+                    switch (FieldValueType(b[2])) {
+                        case VALUE_IS_VALID : {
+                            if (std::abs(val) < m_isoWidth) {
+                                c = m_isoColor;
+                            } else if (val > 0.f) {
+                                c[0] = 1.f;
+                                c[1] = c[2] = quantify(val / maxVal);
+                            } else {
+                                c[0] = c[1] = quantify(-val / maxVal);
+                                c[2] = 1.f;
+                            }
+                            c[3] = 1;
+                            break;
                         }
-                        else if(val > 0.f)
-                        {
-                            c[0] = 1.f;
-                            c[1] = c[2] = quantify(val / maxVal);
+                        case VALUE_IS_BORDER : {
+                            c[0] = c[1] = c[2] = 0.f;
+                            c[3] = 1;
+                            break;
                         }
-                        else
-                        {
-                            c[0] = c[1] = quantify(- val / maxVal);
-                            c[2] = 1.f;
-                        }
-                        c[3] = 1;
+                        default:
+                            break;
                     }
-
-                }
                     break;
+                }
                 default:
                     break;
             }
@@ -182,8 +185,9 @@ struct ColorMap : public DrawingPass {
         NO_FIELD
     };
 
-    enum FieldValueType: bool {
+    enum FieldValueType: int {
         VALUE_IS_VALID   = true,
-        VALUE_IS_INVALID = false
+        VALUE_IS_INVALID = false,
+        VALUE_IS_BORDER  = -1
     };
 };
