@@ -19,10 +19,20 @@ namespace poncaplot{
     void write_image(int w, int h, float *texture, const std::string &filename) {
         {
             auto buffer = new char[w * h * 4];
+
+            // Converts a linear value in the range [0, 1] to an sRGB value in
+            // the range [0, 255].
+            // Source : https://github.com/PetterS/opencv_srgb_gamma/blob/master/srgb.h
             std::transform(texture, texture + w * h * 4,
                            buffer,
-                           [](float in) -> char {
-                               return char(std::floor(in * 255.f));
+                           [](float linear) -> char {
+                               float srgb;
+                               if (linear <= 0.0031308f) {
+                                   srgb = linear * 12.92f;
+                               } else {
+                                   srgb = 1.055f * std::powf(linear, 1.0f / 2.4f) - 0.055f;
+                               }
+                               return srgb * 255.f;
                            });
             stbi_write_png(filename.c_str(), w, h,
                            4, buffer, w * 4);
