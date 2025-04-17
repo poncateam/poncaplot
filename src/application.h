@@ -36,6 +36,7 @@ namespace poncaplot {
         void buildPassInterface(int id);
 
         void renderPasses();
+        void renderPassesInternal(size_t factor, float *buffer);
 
     private:
         float *m_textureBufferPing{nullptr}, *m_textureBufferPong{nullptr};

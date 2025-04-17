@@ -67,25 +67,27 @@ struct DisplayPoint : public DrawingPass {
             : DrawingPass(), m_pointColor(pointColor) {}
     void render(const KdTree& points, float*buffer, RenderingContext ctx) override{
         using VectorType = typename KdTree::VectorType;
-        const auto pLargeSize = 2.f*m_halfSize;
-#pragma omp parallel for default(none) shared(points, buffer, ctx, pLargeSize)
+        const int scaledHalfSize = ctx.pointToPix(m_halfSize);
+        const int pLargeSize = 2 * scaledHalfSize;
+#pragma omp parallel for default(none) shared(points, buffer, ctx, scaledHalfSize, pLargeSize)
         for (int pid = 0; pid< points.point_count(); ++pid){
             const auto& p = points.points()[pid];
             // Build vector that is orthogonal to the normal vector
             const VectorType& tangent {p.normal().y(), -p.normal().x()};
-            int i (std::floor(p.pos().x()));
-            int j (std::floor(p.pos().y()));
-            for (int u = std::floor(-pLargeSize); u <= int(std::ceil(pLargeSize)); ++u ){
+            auto coord = ctx.pointToPix(p.pos());
+            int i (coord.first);
+            int j (coord.second);
+            for (int u =-pLargeSize; u <= pLargeSize; ++u ){
                 int ii = i+u;
                 if(ii>=0 && ii<ctx.w){
-                    for (int v = std::floor(-pLargeSize); v <= int(std::ceil(pLargeSize)); ++v ) {
+                    for (int v = -pLargeSize; v <= pLargeSize; ++v ) {
                         VectorType localPos {u,v};
                         int jj = j + v;
                         if (j >= 0 && j < ctx.h) {
-                            bool draw = (localPos.squaredNorm() < m_halfSize * m_halfSize)  // draw point
+                            bool draw = (localPos.squaredNorm() < scaledHalfSize * scaledHalfSize)  // draw point
                                     ||  ((localPos.squaredNorm() < pLargeSize * pLargeSize)
                                          && (localPos.dot(p.normal()) > 0.f)
-                                         && (std::abs(localPos.dot(tangent)) < 2)
+                                         && (std::abs(localPos.dot(tangent)) < ctx.pointToPix(1.f))
                                          ) // draw normal
                                     ;
                             if (draw) {

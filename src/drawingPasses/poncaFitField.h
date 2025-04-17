@@ -23,7 +23,8 @@ struct FitField : public BaseFitField {
         for (int j = 0; j < ctx.h; ++j ) {
             for (int i = 0; i < ctx.w; ++i) {
                 auto *b = buffer + (i + j * ctx.w) * 4;
-                DataPoint::VectorType query (i, j);
+                auto coord = ctx.pixToPoint(i,j);
+                DataPoint::VectorType query (coord.first, coord.second);
 
                 FitType fit;
                 // Set a weighting function instance
@@ -40,7 +41,7 @@ struct FitField : public BaseFitField {
 
                 if ( fit.isStable() ){
                     postProcess(fit);
-                    float dist = fit.potential({i,j});
+                    float dist = fit.potential({coord.first,coord.second});
                     if (std::abs(dist)> maxVal) maxVal = std::abs(dist);
 
                     b[0] = fit.isSigned() ? dist : std::abs(dist);  // set pixel value

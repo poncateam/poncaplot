@@ -12,14 +12,14 @@ struct SingleFitField : public _Base {
     using FitType = _FitType;
     using WeightFunc = typename FitType::WeightFunction;
 
-    virtual void configureAndFit(const KdTree& points, FitType& fit) = 0;
+    virtual void configureAndFit(const KdTree& points, FitType& fit, RenderingContext ctx) = 0;
 
     void render(const KdTree& points, float*buffer, RenderingContext ctx) override{
         if(points.points().empty()) return;
 
         //Fit on all points
         FitType fit;
-        configureAndFit(points, fit);
+        configureAndFit(points, fit, ctx);
 
         float maxVal = 0;
         if (fit.isStable()) {
@@ -29,7 +29,9 @@ struct SingleFitField : public _Base {
                     auto *b = buffer + (i + j * ctx.w) * 4;
 
                     b[2] = ColorMap::VALUE_IS_VALID;
-                    float dist = fit.potential({i, j});
+//                    float dist = fit.potential( {i, j});
+                    auto coord = ctx.pixToPoint(i,j);
+                    float dist = fit.potential( { coord.first, coord.second } );
                     if (std::abs(dist) > maxVal) maxVal = std::abs(dist);
 
                     b[0] = fit.isSigned() ? dist : std::abs(dist);  // set pixel value
@@ -56,7 +58,7 @@ struct BestFitField : public SingleFitField<_FitType, DrawingPass> {
     /// Method called at the end of the fitting process, only for stable fits
     virtual void postProcess(FitType& /*fit*/){};
 
-    inline void configureAndFit(const KdTree& points, FitType& fit) override {
+    inline void configureAndFit(const KdTree& points, FitType& fit, RenderingContext ctx) override {
         // Configure computation to be centered on the point cloud coordinates
         fit.setWeightFunc(WeightFunc(points.nodes()[0].getAabb()->diagonal().norm()));
         fit.init(points.nodes()[0].getAabb()->center());
@@ -90,7 +92,7 @@ struct OnePointFitField : public SingleFitField<_FitType, BaseFitField>, public 
     /// Method called at the end of the fitting process, only for stable fits
     virtual void postProcess(FitType& /*fit*/){};
 
-    inline void configureAndFit(const KdTree& points, FitType& fit) override {
+    inline void configureAndFit(const KdTree& points, FitType& fit, RenderingContext ctx) override {
         // Configure computation to be centered on the point cloud coordinates
         fit.setWeightFunc(WeightFunc(BaseFitField::params.m_scale));
         auto query = points.points()[pointId].pos();

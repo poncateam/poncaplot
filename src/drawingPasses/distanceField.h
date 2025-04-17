@@ -16,11 +16,12 @@ struct DistanceField : public DrawingPass {
         for (int j = 0; j < ctx.h; ++j ) {
             for (int i = 0; i < ctx.w; ++i) {
                 auto *b = buffer + (i + j * ctx.w) * 4;
+                auto coord = ctx.pixToPoint(i,j);
                 float minDist {float(ctx.w*ctx.h)};  //distance should necessarily be smaller
                 for (const auto &p : points.points()) {
                     int u(std::floor(p.pos().x()));
                     int v(std::floor(p.pos().y()));
-                    auto dist = float(std::sqrt((i-u)*(i-u) + (j-v)*(j-v)));
+                    auto dist = float(std::sqrt((coord.first-u)*(coord.first-u) + (coord.second-v)*(coord.second-v)));
                     minDist = std::min(dist, minDist);
                 }
                 b[0] = minDist;
@@ -46,7 +47,8 @@ struct DistanceFieldWithKdTree : public DrawingPass {
         for (int j = 0; j < ctx.h; ++j ) {
             for (int i = 0; i < ctx.w; ++i) {
                 auto *b = buffer + (i + j * ctx.w) * 4;
-                DataPoint::VectorType query (i, j);
+                auto coord = ctx.pixToPoint(i,j);
+                DataPoint::VectorType query (coord.first, coord.second);
                 auto res = points.nearest_neighbor( query );
                 if(res.begin()!=res.end()) {
                     auto nei = points.points()[res.get()].pos();
@@ -76,12 +78,12 @@ struct DistanceFieldFromOnePoint : public BaseFitField, public OnePointFitFieldB
         for (int j = 0; j < ctx.h; ++j ) {
             for (int i = 0; i < ctx.w; ++i) {
                 auto *b = buffer + (i + j * ctx.w) * 4;
-
+                auto coord = ctx.pixToPoint(i,j);
                 auto p = points.points()[pointId].pos();
 
                 int u(std::floor(p.x()));
                 int v(std::floor(p.y()));
-                auto dist = float(std::sqrt((i-u)*(i-u) + (j-v)*(j-v)));
+                auto dist = float(std::sqrt((coord.first-u)*(coord.first-u) + (coord.second-v)*(coord.second-v)));
 
                 if(dist < params.m_scale) {
                     b[0] = dist;

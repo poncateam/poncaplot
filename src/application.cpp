@@ -97,9 +97,12 @@ namespace poncaplot {
                 auto path = file_dialog(
                         {{"png", "PNG image"}}, true);
                 std::cout << "Save file to: " << path << std::endl;
-                // use buffer that has already been computed (not the next one)
-                float *texture = m_computeInPing ? m_textureBufferPong : m_textureBufferPing;
-                write_image(m_texture->size().x(), m_texture->size().y(), texture, path);
+
+                size_t factor = 2;
+                float *texture = new float[factor * tex_width * tex_height * 4];
+                renderPassesInternal(factor, texture);
+                write_image(tex_width*factor, tex_height*factor, texture, path);
+                delete [] (texture);
             });
         }
 
@@ -384,12 +387,16 @@ namespace poncaplot {
     void
     PoncaPlotApplication::renderPasses() {
         std::cout << "[Main] Update texture" << std::endl;
-        const auto &points = m_dataMgr->getKdTree();
-        for (auto *p: m_passes) {
-            p->render(points, m_computeInPing ? m_textureBufferPing : m_textureBufferPong, {tex_width, tex_height});
-        }
-
+        renderPassesInternal(1, m_computeInPing ? m_textureBufferPing : m_textureBufferPong);
         m_computeInPing = !m_computeInPing;
         m_needUpdate = true;
+    }
+
+    void
+    PoncaPlotApplication::renderPassesInternal(size_t factor, float *buffer) {
+        const auto &points = m_dataMgr->getKdTree();
+        for (auto *p: m_passes) {
+            p->render(points, buffer, {size_t(tex_width*factor), tex_height*factor, 1.f/float(factor)});
+        }
     }
 }
