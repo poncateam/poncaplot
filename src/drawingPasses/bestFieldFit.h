@@ -12,16 +12,14 @@ struct SingleFitField : public _Base {
     using FitType = _FitType;
     using WeightFunc = typename FitType::WeightFunction;
 
-    virtual void configureAndFit(const KdTree& points, FitType& fit, RenderingContext ctx) = 0;
+    virtual float configureAndFit(const KdTree& points, FitType& fit, RenderingContext ctx) = 0;
 
     void render(const KdTree& points, float*buffer, RenderingContext ctx) override{
         if(points.points().empty()) return;
 
         //Fit on all points
         FitType fit;
-        configureAndFit(points, fit, ctx);
-
-        float maxVal = 0;
+        float maxVal = configureAndFit(points, fit, ctx);
         if (fit.isStable()) {
 #pragma omp parallel for collapse(2) default(none) shared(points, buffer, ctx,fit) reduction(max : maxVal)
             for (int j = 0; j < ctx.h; ++j) {
@@ -32,7 +30,6 @@ struct SingleFitField : public _Base {
 //                    float dist = fit.potential( {i, j});
                     auto coord = ctx.pixToPoint(i,j);
                     float dist = fit.potential( { coord.first, coord.second } );
-                    if (std::abs(dist) > maxVal) maxVal = std::abs(dist);
 
                     b[0] = fit.isSigned() ? dist : std::abs(dist);  // set pixel value
                     b[3] = ColorMap::SCALAR_FIELD;                         // set field type
@@ -58,13 +55,15 @@ struct BestFitField : public SingleFitField<_FitType, DrawingPass> {
     /// Method called at the end of the fitting process, only for stable fits
     virtual void postProcess(FitType& /*fit*/){};
 
-    inline void configureAndFit(const KdTree& points, FitType& fit, RenderingContext ctx) override {
+    inline float configureAndFit(const KdTree& points, FitType& fit, RenderingContext ctx) override {
         // Configure computation to be centered on the point cloud coordinates
-        fit.setWeightFunc(WeightFunc(points.nodes()[0].getAabb()->diagonal().norm()));
+        float scale = points.nodes()[0].getAabb()->diagonal().norm();
+        fit.setWeightFunc(WeightFunc(scale));
         fit.init(points.nodes()[0].getAabb()->center());
         // Compute fit
         fit.compute(points.points());
         postProcess(fit);
+        return scale;
     }
 };
 
@@ -92,7 +91,7 @@ struct OnePointFitField : public SingleFitField<_FitType, BaseFitField>, public 
     /// Method called at the end of the fitting process, only for stable fits
     virtual void postProcess(FitType& /*fit*/){};
 
-    inline void configureAndFit(const KdTree& points, FitType& fit, RenderingContext ctx) override {
+    inline float configureAndFit(const KdTree& points, FitType& fit, RenderingContext ctx) override {
         // Configure computation to be centered on the point cloud coordinates
         fit.setWeightFunc(WeightFunc(BaseFitField::params.m_scale));
         auto query = points.points()[pointId].pos();
@@ -108,6 +107,7 @@ struct OnePointFitField : public SingleFitField<_FitType, BaseFitField>, public 
                 std::cerr << "MLS iteration failed" << std::endl;
             }
         }
+        return BaseFitField::params.m_scale;
     }
 };
 

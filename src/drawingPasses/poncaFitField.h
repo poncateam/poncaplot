@@ -18,8 +18,7 @@ struct FitField : public BaseFitField {
     void render(const KdTree& points, float*buffer, RenderingContext ctx) override{
         if(points.points().empty()) return;
 
-        float maxVal = 0;
-#pragma omp parallel for collapse(2) default(none) shared(points, buffer, ctx) reduction(max : maxVal)
+#pragma omp parallel for collapse(2) default(none) shared(points, buffer, ctx)
         for (int j = 0; j < ctx.h; ++j ) {
             for (int i = 0; i < ctx.w; ++i) {
                 auto *b = buffer + (i + j * ctx.w) * 4;
@@ -42,7 +41,6 @@ struct FitField : public BaseFitField {
                 if ( fit.isStable() ){
                     postProcess(fit);
                     float dist = fit.potential({coord.first,coord.second});
-                    if (std::abs(dist)> maxVal) maxVal = std::abs(dist);
 
                     b[0] = fit.isSigned() ? dist : std::abs(dist);  // set pixel value
                     b[2] = ColorMap::VALUE_IS_VALID;
@@ -54,7 +52,7 @@ struct FitField : public BaseFitField {
             }
         }
         // store data for colormap processing (see #ColorMap)
-        buffer[1] = maxVal;
+        buffer[1] = params.m_scale;
         buffer[3] = ColorMap::SCALAR_FIELD;
     }
 };

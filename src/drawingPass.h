@@ -145,14 +145,16 @@ struct ColorMap : public DrawingPass {
                         case VALUE_IS_VALID : {
                             if (std::abs(val) < m_isoWidth) {
                                 c = m_isoColor;
-                            } else if (val > 0.f) {
-                                c[0] = 1.f;
-                                c[1] = c[2] = quantify(val / maxVal);
-                            } else {
-                                c[0] = c[1] = quantify(-val / maxVal);
-                                c[2] = 1.f;
+                            } else if (std::abs(val) < maxVal) {
+                                if (val > 0.f) {
+                                    c[0] = 1.f;
+                                    c[1] = c[2] = quantify(val / maxVal);
+                                } else {
+                                    c[0] = c[1] = quantify(-val / maxVal);
+                                    c[2] = 1.f;
+                                }
+                                c[3] = 1;
                             }
-                            c[3] = 1;
                             break;
                         }
                         case VALUE_IS_BORDER : {
