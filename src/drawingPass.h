@@ -16,10 +16,16 @@ struct FitParameters {
     int   m_iter  {1};
 };
 
+struct DrawingParameters {
+    bool renderTrajectories {false};
+};
+
 /// Base class to rendering processes
 struct DrawingPass {
     virtual void render(const KdTree& points, float*buffer, RenderingContext ctx) = 0;
     virtual ~DrawingPass() = default;
+
+    DrawingParameters drawingParams;
 
     /// draw a segment between start and end using Bresenham's algorithm (last version given at
     /// https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm)

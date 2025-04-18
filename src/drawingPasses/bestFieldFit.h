@@ -20,6 +20,7 @@ struct SingleFitField : public _Base {
         //Fit on all points
         FitType fit;
         float maxVal = configureAndFit(points, fit, ctx);
+        m_lastFit = fit;
         if (fit.isStable()) {
 #pragma omp parallel for collapse(2) default(none) shared(points, buffer, ctx,fit) reduction(max : maxVal)
             for (int j = 0; j < ctx.h; ++j) {
@@ -38,6 +39,23 @@ struct SingleFitField : public _Base {
             // store data for colormap processing (see #ColorMap)
             buffer[1] = maxVal;
             buffer[3] = ColorMap::SCALAR_FIELD;
+        }
+
+        if(Base::drawingParams.renderTrajectories)
+            renderPointsTrajectories(points, buffer, ctx);
+    }
+
+private:
+    _FitType m_lastFit;
+    void renderPointsTrajectories(const KdTree& points, float*buffer, RenderingContext ctx) {
+#pragma omp parallel for
+        for (const auto &p: points.points()) {
+            Base::bresenham(ctx.pointToPix(p.pos()), ctx.pointToPix(m_lastFit.project(p.pos())),{ctx.w, ctx.h},
+                            [buffer, ctx](int x, int y) {
+                                auto *b = buffer + (x + y * ctx.w) * 4;
+                                b[2] = ColorMap::VALUE_IS_BORDER;
+                                b[3] = ColorMap::SCALAR_FIELD;
+                            });
         }
     }
 };

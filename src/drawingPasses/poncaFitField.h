@@ -17,7 +17,15 @@ struct FitField : public BaseFitField {
 
     void render(const KdTree& points, float*buffer, RenderingContext ctx) override{
         if(points.points().empty()) return;
+        renderScalarField(points, buffer, ctx);
+        if(drawingParams.renderTrajectories)
+            renderPointsTrajectories(points, buffer, ctx);
+    }
 
+private:
+    void renderScalarField(const KdTree& points, float*buffer, RenderingContext ctx){
+
+        /// Compute scalar field
 #pragma omp parallel for collapse(2) default(none) shared(points, buffer, ctx)
         for (int j = 0; j < ctx.h; ++j ) {
             for (int i = 0; i < ctx.w; ++i) {
@@ -55,6 +63,58 @@ struct FitField : public BaseFitField {
         buffer[1] = params.m_scale;
         buffer[3] = ColorMap::SCALAR_FIELD;
     }
+    void renderPointsTrajectories(const KdTree& points, float*buffer, RenderingContext ctx){
+
+#pragma omp parallel for
+        for(const auto& p : points.points())
+        {
+
+            /// x is going to follow the flow
+            DataPoint::VectorType x, nextx = p.pos();
+
+            /// We stop if the x does not move anymore, or after 10 iterations
+            int projIter = 0;
+            const int nbProjIter = 50;
+            bool stop = false;
+            float potential {0.f};
+            do {
+                FitType fit;
+                // Set a weighting function instance
+                fit.setWeightFunc(WeightFunc(params.m_scale));
+
+                // Set the evaluation position
+                for (int iter = 0; iter != params.m_iter; ++iter) {
+                    x = nextx;
+
+                    // project to next location and draw
+                    fit.init(x);
+                    if (fit.computeWithIds(points.range_neighbors(x, params.m_scale), points.points()) ==
+                        Ponca::STABLE) {
+                        postProcess(fit);
+                        nextx = fit.project(x);
+                        potential = fit.potential(nextx);
+
+                        // ask to stop the projection procedure if motion is below one pixel
+                        int nbPix = bresenham(ctx.pointToPix( x ) , ctx.pointToPix( nextx ),
+                                    {ctx.w, ctx.h},
+                                         [buffer, ctx](int x, int y){
+                             auto *b = buffer + (x + y * ctx.w) * 4;
+                             b[2] = ColorMap::VALUE_IS_BORDER;
+                             b[3] = ColorMap::SCALAR_FIELD;
+                        });
+                        stop |= nbPix<=1;
+
+                    } else stop = true;
+                }
+
+            } while (!stop
+                     && ++projIter < nbProjIter
+//            && ! x.isApprox(nextx)
+//            && potential >= 10e-5
+                    );
+        }
+    }
+
 };
 
 using PlaneFitField = FitField<PlaneFit>;
