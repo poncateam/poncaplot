@@ -22,7 +22,7 @@ struct SingleFitField : public _Base {
         float maxVal = configureAndFit(points, fit, ctx);
         m_lastFit = fit;
         if (fit.isStable()) {
-#pragma omp parallel for collapse(2) default(none) shared(points, buffer, ctx,fit) reduction(max : maxVal)
+#pragma omp parallel for collapse(2) default(none) shared(points, buffer, ctx,fit)
             for (int j = 0; j < ctx.h; ++j) {
                 for (int i = 0; i < ctx.w; ++i) {
                     auto *b = buffer + (i + j * ctx.w) * 4;
