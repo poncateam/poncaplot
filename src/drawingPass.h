@@ -20,6 +20,50 @@ struct FitParameters {
 struct DrawingPass {
     virtual void render(const KdTree& points, float*buffer, RenderingContext ctx) = 0;
     virtual ~DrawingPass() = default;
+
+    /// draw a segment between start and end using Bresenham's algorithm (last version given at
+    /// https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm)
+    template <typename Drawer>
+    inline int bresenham (const std::pair<int,int> &start,
+                          const std::pair<int,int> &end,
+                          const std::pair<int,int> &imgSize,
+                          Drawer f) {
+        {
+            // TODO: Refactor this to Eigen style...
+            int x0 = start.first;
+            int x1 = end.first;
+            int y0 = start.second;
+            int y1 = end.second;
+
+            int dx = std::abs(x1 - x0);
+            int sx = x0 < x1 ? 1 : -1;
+            int dy = -std::abs(y1 - y0);
+            int sy = y0 < y1 ? 1 : -1;
+            int error = dx+dy;
+            int count = 0;
+            while(true){
+                // check image bounds
+                if (x0 < 0 || x0 > imgSize.first-1 ||
+                    y0 < 0 || y0 > imgSize.second-1) break;
+
+                f(x0, y0);
+                count ++;
+
+                int e2 = 2*error;
+                if (e2 >= dy){
+                    if (x0 ==x1) break;
+                    error += dy;
+                    x0 += sx;
+                }
+                if (e2 <= dx){
+                    if (y0 ==y1) break;
+                    error += dx;
+                    y0 += sy;
+                }
+            }
+            return count;
+        }
+    }
 };
 
 struct BaseFitField : public DrawingPass{
