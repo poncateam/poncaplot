@@ -12,9 +12,11 @@ struct DistanceField : public DrawingPass {
         }
 
         float maxVal = 0;
-#pragma omp parallel for collapse(2) default(none) shared(points, buffer, ctx) reduction(max : maxVal)
-        for (int j = 0; j < ctx.h; ++j ) {
-            for (int i = 0; i < ctx.w; ++i) {
+        const int h = ctx.h;
+        const int w = ctx.w;
+#pragma omp parallel for collapse(2) default(none) shared(points, buffer, ctx, h, w) reduction(max : maxVal)
+        for (int j = 0; j < h; ++j ) {
+            for (int i = 0; i < w; ++i) {
                 auto *b = buffer + (i + j * ctx.w) * 4;
                 auto coord = ctx.pixToPoint(i,j);
                 float minDist {float(ctx.w*ctx.h)};  //distance should necessarily be smaller
@@ -43,9 +45,11 @@ struct DistanceFieldWithKdTree : public DrawingPass {
         }
 
         float maxVal = 0;
-#pragma omp parallel for collapse(2) default(none) shared(points, buffer, ctx) reduction(max : maxVal)
-        for (int j = 0; j < ctx.h; ++j ) {
-            for (int i = 0; i < ctx.w; ++i) {
+        const int h = ctx.h;
+        const int w = ctx.w;
+#pragma omp parallel for collapse(2) default(none) shared(points, buffer, ctx, h, w) reduction(max : maxVal)
+        for (int j = 0; j < h; ++j ) {
+            for (int i = 0; i < w; ++i) {
                 auto *b = buffer + (i + j * ctx.w) * 4;
                 auto coord = ctx.pixToPoint(i,j);
                 DataPoint::VectorType query (coord.first, coord.second);
@@ -74,9 +78,11 @@ struct DistanceFieldFromOnePoint : public BaseFitField, public OnePointFitFieldB
             return;
         }
 
-#pragma omp parallel for collapse(2) default(none) shared(points, buffer, ctx)
-        for (int j = 0; j < ctx.h; ++j ) {
-            for (int i = 0; i < ctx.w; ++i) {
+        const int h = ctx.h;
+        const int w = ctx.w;
+#pragma omp parallel for collapse(2) default(none) shared(points, buffer, ctx, w, h)
+        for (int j = 0; j < h; ++j ) {
+            for (int i = 0; i < w; ++i) {
                 auto *b = buffer + (i + j * ctx.w) * 4;
                 auto coord = ctx.pixToPoint(i,j);
                 auto p = points.points()[pointId].pos();

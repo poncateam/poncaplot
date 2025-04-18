@@ -26,9 +26,11 @@ private:
     void renderScalarField(const KdTree& points, float*buffer, RenderingContext ctx){
 
         /// Compute scalar field
-#pragma omp parallel for collapse(2) default(none) shared(points, buffer, ctx)
-        for (int j = 0; j < ctx.h; ++j ) {
-            for (int i = 0; i < ctx.w; ++i) {
+        const int h = ctx.h;
+        const int w = ctx.w;
+#pragma omp parallel for collapse(2) default(none) shared(points, buffer, ctx, w, h)
+        for (int j = 0; j < h; ++j ) {
+            for (int i = 0; i < w; ++i) {
                 auto *b = buffer + (i + j * ctx.w) * 4;
                 auto coord = ctx.pixToPoint(i,j);
                 DataPoint::VectorType query (coord.first, coord.second);
@@ -65,10 +67,10 @@ private:
     }
     void renderPointsTrajectories(const KdTree& points, float*buffer, RenderingContext ctx){
 
-#pragma omp parallel for
-        for(const auto& p : points.points())
+#pragma omp parallel for default(none) shared (points, buffer, ctx)
+        for (int i = 0; i < points.point_count(); ++i)
         {
-
+            const auto& p = points.points()[i];
             /// x is going to follow the flow
             DataPoint::VectorType x, nextx = p.pos();
 
