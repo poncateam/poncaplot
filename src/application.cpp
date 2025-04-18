@@ -178,7 +178,7 @@ namespace poncaplot {
             new nanogui::Label(genericFitWidget, "Scale");
             auto slider = new Slider(genericFitWidget);
             slider->set_value(passPlaneFit->params.m_scale); // init with plane, but sync with current.
-            slider->set_range({5, 200});
+            slider->set_range({10, 750});
             slider->set_callback([&](float value) {
                 passPlaneFit->params.m_scale = value;
                 passSphereFit->params.m_scale = value;
