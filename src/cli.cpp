@@ -22,6 +22,9 @@ namespace poncaplot {
                 unsigned int pointId{0};
             } fitting;
             struct {
+                bool renderTrajectories{false};
+            } display;
+            struct {
                 std::string path{};
                 size_t width{500};
                 size_t height{500};
@@ -73,6 +76,10 @@ namespace poncaplot {
                     .help("point id for one point fit")
                     .scan<'i', unsigned int>()
                     .default_value(params.fitting.pointId);
+            // one point fit
+            program.add_argument("-t", "--trajectories")
+                    .help("if supported, render point projection trajectories")
+                    .default_value(params.display.renderTrajectories);
         }
 
         // return value of the method: do we skip the GUI ?
@@ -91,6 +98,9 @@ namespace poncaplot {
 
                 // load one point fit properties
                 if (program.is_used("-p")) params.fitting.pointId = program.get<unsigned int>("-p");
+
+                // load display properties
+                if (program.is_used("-t")) params.display.renderTrajectories = program.get<bool>("-t");
 
                 // load output properties
                 auto output = program.present("-o");
@@ -115,6 +125,7 @@ namespace poncaplot {
             // configure fitting
             std::cout << "Configure fitting" << std::endl;
             auto pass = m_dataMgr->getDrawingPass(params.fitting.name);
+            pass->drawingParams.renderTrajectories = params.display.renderTrajectories;
 
             if (auto fit = dynamic_cast<BaseFitField *>(pass)) {
                 fit->params.m_scale = params.fitting.scale;

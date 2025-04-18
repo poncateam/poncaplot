@@ -11,6 +11,7 @@
 #include <nanogui/label.h>
 #include <nanogui/layout.h>
 #include <nanogui/slider.h>
+#include <nanogui/checkbox.h>
 
 #include <nanogui/opengl.h> // GLFW_KEY_ESCAPE and others
 
@@ -162,6 +163,18 @@ namespace poncaplot {
             genericFitWidget = new nanogui::Widget(window);
             genericFitWidget->set_layout(new GroupLayout());
             new nanogui::Label(genericFitWidget, "Local Fitting", "sans-bold");
+            auto trajState = new CheckBox(genericFitWidget, "Display Trajectories");
+            trajState->set_checked(passPlaneFit->drawingParams.renderTrajectories); // init with plane, but sync with current.
+            trajState->set_callback([&](bool state){
+                passPlaneFit->drawingParams.renderTrajectories = state;
+                passSphereFit->drawingParams.renderTrajectories = state;
+                passOrientedSphereFit->drawingParams.renderTrajectories = state;
+                passUnorientedSphereFit->drawingParams.renderTrajectories = state;
+                passOnePlaneFit->drawingParams.renderTrajectories = state;
+                passOneSphereFit->drawingParams.renderTrajectories = state;
+                passOneOrientedSphereFit->drawingParams.renderTrajectories = state;
+                renderPasses();
+            });
             new nanogui::Label(genericFitWidget, "Scale");
             auto slider = new Slider(genericFitWidget);
             slider->set_value(passPlaneFit->params.m_scale); // init with plane, but sync with current.
