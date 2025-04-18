@@ -30,7 +30,7 @@ namespace poncaplot{
                                if (linear <= 0.0031308f) {
                                    srgb = linear * 12.92f;
                                } else {
-                                   srgb = 1.055f * std::powf(linear, 1.0f / 2.4f) - 0.055f;
+                                   srgb = 1.055f * std::pow(linear, 1.0f / 2.4f) - 0.055f;
                                }
                                return srgb * 255.f;
                            });
