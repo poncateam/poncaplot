@@ -12,6 +12,7 @@
 #include <Ponca/SpatialPartitioning>
 
 #include "poncaTypes.h"
+#include "drawingPasses/bestFieldFit.h"
 #include "drawingPasses/distanceField.h"
 #include "drawingPasses/poncaFitField.h"
 
@@ -71,13 +72,20 @@ public:
     void computeNormals(int k = 3);
 
     /// Names of the supported drawing passes
-    static constexpr size_t nbSupportedDrawingPasses = 5;
+    static constexpr size_t nbSupportedDrawingPasses = 12;
     const std::map<const std::string, size_t> supportedDrawingPasses {
                     {"Distance Field", 0},
-                    {"Plane", 1},
-                    {"Sphere", 2},
-                    {"Oriented Sphere", 3},
-                    {"Unoriented Sphere", 4}
+                    {"MLS - Plane", 1},
+                    {"MLS - Sphere", 2},
+                    {"MLS - Oriented Sphere", 3},
+                    {"MLS - Unoriented Sphere", 4},
+                    {"Best Fit - Plane", 5},
+                    {"Best Fit - Sphere", 6},
+                    {"Best Fit - Oriented Sphere", 7},
+                    {"One Fit - Plane", 8},
+                    {"One Fit - Sphere", 9},
+                    {"One Fit - Oriented Sphere", 10},
+                    {"One Point - Scale", 11}
             };
 
     DrawingPass* getDrawingPass(const std::string& name);
@@ -86,29 +94,32 @@ public:
     /// \param index of the pass name in supportedDrawingPasses
     DrawingPass* getDrawingPass(size_t index);
 
+#define WRITE_FIT_CASE(ID,FTYPE) \
+    case ID:                 \
+        f(dynamic_cast<FTYPE*>(getDrawingPass(ID))); \
+        break;
+
     template <typename Functor>
     bool processPass(int index, Functor f) {
         switch (index) {
-            case 0: //Distance Field
-                f(dynamic_cast<DistanceFieldWithKdTree*>(getDrawingPass(0)));
-                break;
-            case 1: // Plane
-                f(dynamic_cast<PlaneFitField*>(getDrawingPass(1)));
-                break;
-            case 2: // Sphere
-                f(dynamic_cast<SphereFitField*>(getDrawingPass(2)));
-                break;
-            case 3: // Oriented Sphere
-                f(dynamic_cast<OrientedSphereFitField*>(getDrawingPass(3)));
-                break;
-            case 4: // Unoriented Sphere
-                f(dynamic_cast<UnorientedSphereFitField*>(getDrawingPass(4)));
-                break;
-            default:
-                return false;
+            WRITE_FIT_CASE(0,DistanceFieldWithKdTree)
+            WRITE_FIT_CASE(1,PlaneFitField)
+            WRITE_FIT_CASE(2,SphereFitField)
+            WRITE_FIT_CASE(3,OrientedSphereFitField)
+            WRITE_FIT_CASE(4,UnorientedSphereFitField)
+            WRITE_FIT_CASE(5,BestPlaneFitField)
+            WRITE_FIT_CASE(6,BestSphereFitField)
+            WRITE_FIT_CASE(7,BestOrientedSphereFitField)
+            WRITE_FIT_CASE(8,OnePlaneFitField)
+            WRITE_FIT_CASE(9,OneSphereFitField)
+            WRITE_FIT_CASE(10,OneOrientedSphereFitField)
+            WRITE_FIT_CASE(11,DistanceFieldFromOnePoint)
+            default: return false;
         }
         return true;
     }
+
+#undef WRITE_FIT_CASE
 
 
 private:

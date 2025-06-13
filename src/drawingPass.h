@@ -3,21 +3,87 @@
 #include <random>
 #include <iostream>
 
+#include "contexts.h"
 #include "poncaTypes.h"
 
 
+struct OnePointFitFieldBase {
+    unsigned int pointId {0};
+};
+
+struct FitParameters {
+    float m_scale {40.f};
+    int   m_iter  {1};
+};
+
+struct DrawingParameters {
+    bool renderTrajectories {false};
+};
+
 /// Base class to rendering processes
 struct DrawingPass {
-    virtual void render(const KdTree& points, float*buffer, int w, int h) = 0;
+    virtual void render(const KdTree& points, float*buffer, RenderingContext ctx) = 0;
     virtual ~DrawingPass() = default;
+
+    DrawingParameters drawingParams;
+
+    /// draw a segment between start and end using Bresenham's algorithm (last version given at
+    /// https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm)
+    template <typename Drawer>
+    inline int bresenham (const std::pair<int,int> &start,
+                          const std::pair<int,int> &end,
+                          const std::pair<int,int> &imgSize,
+                          Drawer f) {
+        {
+            // TODO: Refactor this to Eigen style...
+            int x0 = start.first;
+            int x1 = end.first;
+            int y0 = start.second;
+            int y1 = end.second;
+
+            int dx = std::abs(x1 - x0);
+            int sx = x0 < x1 ? 1 : -1;
+            int dy = -std::abs(y1 - y0);
+            int sy = y0 < y1 ? 1 : -1;
+            int error = dx+dy;
+            int count = 0;
+            while(true){
+                // check image bounds
+                if (x0 < 0 || x0 > imgSize.first-1 ||
+                    y0 < 0 || y0 > imgSize.second-1) break;
+
+                f(x0, y0);
+                count ++;
+
+                int e2 = 2*error;
+                if (e2 >= dy){
+                    if (x0 ==x1) break;
+                    error += dy;
+                    x0 += sx;
+                }
+                if (e2 <= dx){
+                    if (y0 ==y1) break;
+                    error += dx;
+                    y0 += sy;
+                }
+            }
+            return count;
+        }
+    }
+};
+
+struct BaseFitField : public DrawingPass{
+    inline explicit BaseFitField() : DrawingPass() {}
+    ~BaseFitField() override = default;
+    FitParameters params;
 };
 
 struct FillPass : public DrawingPass {
     inline explicit FillPass(const nanogui::Vector4f &fillColor = {1,1,1,1})
             : m_fillColor(fillColor) {}
-    void render(const KdTree& /*points*/, float*buffer, int w, int h) override{
-#pragma omp parallel for default(none) shared(buffer, w, h)
-        for(auto j = 0; j<w*h; ++j){
+    void render(const KdTree& /*points*/, float*buffer, RenderingContext ctx) override{
+#pragma omp parallel for default(none) shared(buffer, ctx)
+        for(auto j = 0; j<ctx.w*ctx.h; ++j){
             buffer[j*4] = m_fillColor.x();
             buffer[j*4+1] = m_fillColor.y();
             buffer[j*4+2] = m_fillColor.z();
@@ -29,10 +95,10 @@ struct FillPass : public DrawingPass {
 
 struct RandomPass : public DrawingPass {
     inline explicit RandomPass() : DrawingPass(), gen(rd()) {}
-    void render(const KdTree& /*points*/, float*buffer, int w, int h) override{
-#pragma omp parallel for default(none) shared(buffer, w, h)
-        for(auto j = 0; j<w*h; ++j){
-            float grad = float(j)/float(w*h);
+    void render(const KdTree& /*points*/, float*buffer, RenderingContext ctx) override{
+#pragma omp parallel for default(none) shared(buffer, ctx)
+        for(auto j = 0; j<ctx.w*ctx.h; ++j){
+            float grad = float(j)/float(ctx.w*ctx.h);
             buffer[j*4] = grad;
             buffer[j*4+1] = grad;
             buffer[j*4+2] = grad;
@@ -49,31 +115,33 @@ private:
 struct DisplayPoint : public DrawingPass {
     inline explicit DisplayPoint(const nanogui::Vector4i &pointColor = {0,0,0,1})
             : DrawingPass(), m_pointColor(pointColor) {}
-    void render(const KdTree& points, float*buffer, int w, int h) override{
+    void render(const KdTree& points, float*buffer, RenderingContext ctx) override{
         using VectorType = typename KdTree::VectorType;
-        const auto pLargeSize = 2.f*m_halfSize;
-#pragma omp parallel for default(none) shared(points, buffer, w, h,pLargeSize)
+        const int scaledHalfSize = ctx.pointToPix(m_halfSize);
+        const int pLargeSize = 2 * scaledHalfSize;
+#pragma omp parallel for default(none) shared(points, buffer, ctx, scaledHalfSize, pLargeSize)
         for (int pid = 0; pid< points.point_count(); ++pid){
             const auto& p = points.points()[pid];
             // Build vector that is orthogonal to the normal vector
             const VectorType& tangent {p.normal().y(), -p.normal().x()};
-            int i (std::floor(p.pos().x()));
-            int j (std::floor(p.pos().y()));
-            for (int u = std::floor(-pLargeSize); u <= int(std::ceil(pLargeSize)); ++u ){
+            auto coord = ctx.pointToPix(p.pos());
+            int i (coord.first);
+            int j (coord.second);
+            for (int u =-pLargeSize; u <= pLargeSize; ++u ){
                 int ii = i+u;
-                if(ii>=0 && ii<w){
-                    for (int v = std::floor(-pLargeSize); v <= int(std::ceil(pLargeSize)); ++v ) {
+                if(ii>=0 && ii<ctx.w){
+                    for (int v = -pLargeSize; v <= pLargeSize; ++v ) {
                         VectorType localPos {u,v};
                         int jj = j + v;
-                        if (j >= 0 && j < h) {
-                            bool draw = (localPos.squaredNorm() < m_halfSize * m_halfSize)  // draw point
+                        if (jj >= 0 && jj < ctx.h) {
+                            bool draw = (localPos.squaredNorm() < scaledHalfSize * scaledHalfSize)  // draw point
                                     ||  ((localPos.squaredNorm() < pLargeSize * pLargeSize)
                                          && (localPos.dot(p.normal()) > 0.f)
-                                         && (std::abs(localPos.dot(tangent)) < 2)
+                                         && (std::abs(localPos.dot(tangent)) < ctx.pointToPix(1.f))
                                          ) // draw normal
                                     ;
                             if (draw) {
-                                auto *b = buffer + (ii + jj * w) * 4;
+                                auto *b = buffer + (ii + jj * ctx.w) * 4;
                                 b[0] = m_pointColor[0];
                                 b[1] = m_pointColor[1];
                                 b[2] = m_pointColor[2];
@@ -86,7 +154,7 @@ struct DisplayPoint : public DrawingPass {
         }
     }
     nanogui::Vector4f m_pointColor;
-    float m_halfSize{1.f};
+    float m_halfSize{3.f};
 };
 
 
@@ -103,49 +171,52 @@ struct DisplayPoint : public DrawingPass {
 ///       and thus must be set even if the pixel is invalid
 struct ColorMap : public DrawingPass {
     inline explicit ColorMap(const nanogui::Vector4i &isoColor = {1,1,1,1},
-                             const nanogui::Vector4i &defaultColor = {0,0,0,1})
+                             const nanogui::Vector4i &defaultColor = {1,1,1,0})
     : DrawingPass(), m_isoColor(isoColor), m_defaultColor(defaultColor) {}
 
     [[nodiscard]] inline float quantify(float in) const
     { return float(std::floor(in * float(m_isoQuantifyNumber)) / float(m_isoQuantifyNumber)); }
 
-    void render(const KdTree& points, float*buffer, int w, int h) override{
+    void render(const KdTree& points, float*buffer, RenderingContext ctx) override{
         const FieldType ftype {int(buffer[3])};
         const auto maxVal = buffer[1];
 
         if (ftype == NO_FIELD) return;
 
-#pragma omp parallel for default(none) shared(buffer, w, h, ftype, maxVal)
-        for(auto j = 0; j<w*h; ++j){
+#pragma omp parallel for default(none) shared(buffer, ctx, ftype, maxVal)
+        for(auto j = 0; j<ctx.w*ctx.h; ++j){
             auto *b = buffer + j * 4;
             auto val = b[0];
             nanogui::Vector4f c =  m_defaultColor;
 
             switch (ftype) {
                 case SCALAR_FIELD: {
-                    if( FieldValueType(b[2]) )
-                    {
-                        if(std::abs(val) < m_isoWidth)
-                        {
-                            c = m_isoColor;
+                    switch (FieldValueType(b[2])) {
+                        case VALUE_IS_VALID : {
+                            if (std::abs(val) < m_isoWidth) {
+                                c = m_isoColor;
+                            } else if (std::abs(val) < maxVal) {
+                                if (val > 0.f) {
+                                    c[0] = 1.f;
+                                    c[1] = c[2] = quantify(val / maxVal);
+                                } else {
+                                    c[0] = c[1] = quantify(-val / maxVal);
+                                    c[2] = 1.f;
+                                }
+                                c[3] = 1;
+                            }
+                            break;
                         }
-                        else if(val > 0.f)
-                        {
-                            c[0] = quantify(1.f - val / maxVal);
-                            c[1] = 0;
-                            c[2] = 0;
+                        case VALUE_IS_BORDER : {
+                            c[0] = c[1] = c[2] = 0.f;
+                            c[3] = 1;
+                            break;
                         }
-                        else
-                        {
-                            c[0] = 0;
-                            c[1] = 0;
-                            c[2] = quantify(1.f - (-val / maxVal));
-                        }
-                        c[3] = 1;
+                        default:
+                            break;
                     }
-
-                }
                     break;
+                }
                 default:
                     break;
             }
@@ -166,8 +237,9 @@ struct ColorMap : public DrawingPass {
         NO_FIELD
     };
 
-    enum FieldValueType: bool {
+    enum FieldValueType: int {
         VALUE_IS_VALID   = true,
-        VALUE_IS_INVALID = false
+        VALUE_IS_INVALID = false,
+        VALUE_IS_BORDER  = -1
     };
 };

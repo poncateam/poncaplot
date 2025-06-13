@@ -4,7 +4,7 @@
 
 struct DistanceField : public DrawingPass {
     inline explicit DistanceField() : DrawingPass() {}
-    void render(const KdTree& points, float*buffer, int w, int h) override {
+    void render(const KdTree& points, float*buffer, RenderingContext ctx) override {
         if(points.points().empty())
         {
             buffer[1] = ColorMap::NO_FIELD;
@@ -12,15 +12,18 @@ struct DistanceField : public DrawingPass {
         }
 
         float maxVal = 0;
-#pragma omp parallel for collapse(2) default(none) shared(points, buffer, w, h) reduction(max : maxVal)
+        const int h = ctx.h;
+        const int w = ctx.w;
+#pragma omp parallel for collapse(2) default(none) shared(points, buffer, ctx, h, w) reduction(max : maxVal)
         for (int j = 0; j < h; ++j ) {
             for (int i = 0; i < w; ++i) {
-                auto *b = buffer + (i + j * w) * 4;
-                float minDist {float(w*h)};  //distance should necessarily be smaller
+                auto *b = buffer + (i + j * ctx.w) * 4;
+                auto coord = ctx.pixToPoint(i,j);
+                float minDist {float(ctx.w*ctx.h)};  //distance should necessarily be smaller
                 for (const auto &p : points.points()) {
                     int u(std::floor(p.pos().x()));
                     int v(std::floor(p.pos().y()));
-                    auto dist = float(std::sqrt((i-u)*(i-u) + (j-v)*(j-v)));
+                    auto dist = float(std::sqrt((coord.first-u)*(coord.first-u) + (coord.second-v)*(coord.second-v)));
                     minDist = std::min(dist, minDist);
                 }
                 b[0] = minDist;
@@ -34,7 +37,7 @@ struct DistanceField : public DrawingPass {
 };
 struct DistanceFieldWithKdTree : public DrawingPass {
     inline explicit DistanceFieldWithKdTree() : DrawingPass() {}
-    void render(const KdTree& points, float*buffer, int w, int h) override{
+    void render(const KdTree& points, float*buffer, RenderingContext ctx) override{
         if(points.points().empty())
         {
             buffer[1] = ColorMap::NO_FIELD;
@@ -42,11 +45,14 @@ struct DistanceFieldWithKdTree : public DrawingPass {
         }
 
         float maxVal = 0;
-#pragma omp parallel for collapse(2) default(none) shared(points, buffer, w, h) reduction(max : maxVal)
+        const int h = ctx.h;
+        const int w = ctx.w;
+#pragma omp parallel for collapse(2) default(none) shared(points, buffer, ctx, h, w) reduction(max : maxVal)
         for (int j = 0; j < h; ++j ) {
             for (int i = 0; i < w; ++i) {
-                auto *b = buffer + (i + j * w) * 4;
-                DataPoint::VectorType query (i, j);
+                auto *b = buffer + (i + j * ctx.w) * 4;
+                auto coord = ctx.pixToPoint(i,j);
+                DataPoint::VectorType query (coord.first, coord.second);
                 auto res = points.nearest_neighbor( query );
                 if(res.begin()!=res.end()) {
                     auto nei = points.points()[res.get()].pos();
@@ -59,5 +65,48 @@ struct DistanceFieldWithKdTree : public DrawingPass {
             }
         }
         buffer[1] = maxVal;
+    }
+};
+
+// display distance field clamped by the current scale value
+struct DistanceFieldFromOnePoint : public BaseFitField, public OnePointFitFieldBase {
+    inline explicit DistanceFieldFromOnePoint() : BaseFitField(), OnePointFitFieldBase() {}
+    void render(const KdTree& points, float*buffer, RenderingContext ctx) override {
+        if(points.points().empty())
+        {
+            buffer[1] = ColorMap::NO_FIELD;
+            return;
+        }
+
+        const int h = ctx.h;
+        const int w = ctx.w;
+#pragma omp parallel for collapse(2) default(none) shared(points, buffer, ctx, w, h)
+        for (int j = 0; j < h; ++j ) {
+            for (int i = 0; i < w; ++i) {
+                auto *b = buffer + (i + j * ctx.w) * 4;
+                auto coord = ctx.pixToPoint(i,j);
+                auto p = points.points()[pointId].pos();
+
+                int u(std::floor(p.x()));
+                int v(std::floor(p.y()));
+                auto dist = float(std::sqrt((coord.first-u)*(coord.first-u) + (coord.second-v)*(coord.second-v)));
+
+                if(dist < params.m_scale) {
+                    b[0] = dist;
+                    b[2] = ColorMap::VALUE_IS_VALID;
+                    b[3] = ColorMap::SCALAR_FIELD;
+                }
+                else if (dist < params.m_scale + 0.5) {
+                    b[0] = dist;
+                    b[2] = ColorMap::VALUE_IS_BORDER;
+                    b[3] = ColorMap::SCALAR_FIELD;
+                }
+                else {
+                    b[2] = ColorMap::VALUE_IS_INVALID;
+                }
+            }
+        }
+        buffer[1] = params.m_scale;
+        buffer[3] = ColorMap::SCALAR_FIELD;
     }
 };

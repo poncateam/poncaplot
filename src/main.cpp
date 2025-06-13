@@ -17,6 +17,8 @@
 #include "application.h"
 #include "cli.h"
 
+using namespace poncaplot;
+
 DataManager *mgr {nullptr};
 
 void clean(){

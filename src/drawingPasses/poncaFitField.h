@@ -3,12 +3,6 @@
 #include "../drawingPass.h"
 #include "../poncaTypes.h"
 
-struct BaseFitField : public DrawingPass{
-    inline explicit BaseFitField() : DrawingPass() {}
-    ~BaseFitField() override = default;
-    float m_scale {40.f};
-    int   m_iter  {1};
-};
 
 template <typename _FitType>
 struct FitField : public BaseFitField {
@@ -21,43 +15,108 @@ struct FitField : public BaseFitField {
     /// Method called at the end of the fitting process, only for stable fits
     virtual void postProcess(FitType& /*fit*/){};
 
-    void render(const KdTree& points, float*buffer, int w, int h) override{
+    void render(const KdTree& points, float*buffer, RenderingContext ctx) override{
         if(points.points().empty()) return;
+        renderScalarField(points, buffer, ctx);
+        if(drawingParams.renderTrajectories)
+            renderPointsTrajectories(points, buffer, ctx);
+    }
 
-        float maxVal = 0;
-#pragma omp parallel for collapse(2) default(none) shared(points, buffer, w, h) reduction(max : maxVal)
+private:
+    void renderScalarField(const KdTree& points, float*buffer, RenderingContext ctx){
+
+        /// Compute scalar field
+        const int h = ctx.h;
+        const int w = ctx.w;
+#pragma omp parallel for collapse(2) default(none) shared(points, buffer, ctx, w, h)
         for (int j = 0; j < h; ++j ) {
             for (int i = 0; i < w; ++i) {
-                auto *b = buffer + (i + j * w) * 4;
-                DataPoint::VectorType query (i, j);
+                auto *b = buffer + (i + j * ctx.w) * 4;
+                auto coord = ctx.pixToPoint(i,j);
+                DataPoint::VectorType query (coord.first, coord.second);
 
                 FitType fit;
                 // Set a weighting function instance
-                fit.setWeightFunc(WeightFunc(m_scale));
+                fit.setWeightFunc(WeightFunc(params.m_scale));
                 // Set the evaluation position
-                for (int iter = 0; iter != m_iter; ++iter) {
+                for (int iter = 0; iter != params.m_iter; ++iter) {
                     fit.init(query);
                     // Fit plane (method compute handles multipass fitting
-                    if (fit.computeWithIds(points.range_neighbors(query, m_scale), points.points()) ==
+                    if (fit.computeWithIds(points.range_neighbors(query, params.m_scale), points.points()) ==
                         Ponca::STABLE) {
                         query = fit.project(query);
                     }
                 }
 
-                if ( (b[2] = fit.isStable()) ){
+                if ( fit.isStable() ){
                     postProcess(fit);
-                    float dist = fit.potential({i,j});
-                    if (std::abs(dist)> maxVal) maxVal = std::abs(dist);
+                    float dist = fit.potential({coord.first,coord.second});
 
                     b[0] = fit.isSigned() ? dist : std::abs(dist);  // set pixel value
+                    b[2] = ColorMap::VALUE_IS_VALID;
                     b[3] = ColorMap::SCALAR_FIELD;                         // set field type
+                }
+                else{
+                    b[2] = ColorMap::VALUE_IS_INVALID;
                 }
             }
         }
         // store data for colormap processing (see #ColorMap)
-        buffer[1] = maxVal;
+        buffer[1] = params.m_scale;
         buffer[3] = ColorMap::SCALAR_FIELD;
     }
+    void renderPointsTrajectories(const KdTree& points, float*buffer, RenderingContext ctx){
+
+#pragma omp parallel for default(none) shared (points, buffer, ctx)
+        for (int i = 0; i < points.point_count(); ++i)
+        {
+            const auto& p = points.points()[i];
+            /// x is going to follow the flow
+            DataPoint::VectorType x, nextx = p.pos();
+
+            /// We stop if the x does not move anymore, or after 10 iterations
+            int projIter = 0;
+            const int nbProjIter = 50;
+            bool stop = false;
+            float potential {0.f};
+            do {
+                FitType fit;
+                // Set a weighting function instance
+                fit.setWeightFunc(WeightFunc(params.m_scale));
+
+                // Set the evaluation position
+                for (int iter = 0; iter != params.m_iter; ++iter) {
+                    x = nextx;
+
+                    // project to next location and draw
+                    fit.init(x);
+                    if (fit.computeWithIds(points.range_neighbors(x, params.m_scale), points.points()) ==
+                        Ponca::STABLE) {
+                        postProcess(fit);
+                        nextx = fit.project(x);
+                        potential = fit.potential(nextx);
+
+                        // ask to stop the projection procedure if motion is below one pixel
+                        int nbPix = bresenham(ctx.pointToPix( x ) , ctx.pointToPix( nextx ),
+                                    {ctx.w, ctx.h},
+                                         [buffer, ctx](int x, int y){
+                             auto *b = buffer + (x + y * ctx.w) * 4;
+                             b[2] = ColorMap::VALUE_IS_BORDER;
+                             b[3] = ColorMap::SCALAR_FIELD;
+                        });
+                        stop |= nbPix<=1;
+
+                    } else stop = true;
+                }
+
+            } while (!stop
+                     && ++projIter < nbProjIter
+//            && ! x.isApprox(nextx)
+//            && potential >= 10e-5
+                    );
+        }
+    }
+
 };
 
 using PlaneFitField = FitField<PlaneFit>;

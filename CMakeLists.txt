@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0.0)
+cmake_minimum_required(VERSION 3.5.0)
 
 project("PoncaPlot")
 
@@ -62,6 +62,8 @@ add_executable( poncaplot
         src/dataManager.cpp
         src/myview.h
         src/myview.cpp
+        src/appBase.h
+        src/appBase.cpp
         src/application.h
         src/application.cpp
         src/cli.h
@@ -70,6 +72,7 @@ add_executable( poncaplot
         src/drawingPass.h
         src/drawingPasses/distanceField.h
         src/drawingPasses/poncaFitField.h
+        src/drawingPasses/bestFieldFit.h
                 src/main.cpp
 )
 

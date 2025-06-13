@@ -120,6 +120,12 @@ DataManager::getDrawingPass(const std::string& name){
     return getDrawingPass(supportedDrawingPasses.at(name));
 }
 
+
+#define WRITE_NEW_FIT_CASE(ID,FTYPE) \
+    case ID:                     \
+        *p = new FTYPE();\
+        break;
+
 DrawingPass*
 DataManager::getDrawingPass(size_t index){
     if (index >= nbSupportedDrawingPasses) return nullptr;
@@ -127,24 +133,23 @@ DataManager::getDrawingPass(size_t index){
     DrawingPass** p = &(m_drawingPasses[index]);
     if((*p) == nullptr) {
         switch (index) {
-            case 0: //Distance Field
-                *p = new DistanceFieldWithKdTree();
-                break;
-            case 1: // Plane
-                *p = new PlaneFitField();
-                break;
-            case 2: // Sphere
-                *p = new SphereFitField();
-                break;
-            case 3: // Oriented Sphere
-                *p = new OrientedSphereFitField();
-                break;
-            case 4: // Unoriented Sphere
-                *p = new UnorientedSphereFitField();
-                break;
-            default:
-                break;
+            WRITE_NEW_FIT_CASE(0,DistanceFieldWithKdTree)
+            WRITE_NEW_FIT_CASE(1,PlaneFitField)
+            WRITE_NEW_FIT_CASE(2,SphereFitField)
+            WRITE_NEW_FIT_CASE(3,OrientedSphereFitField)
+            WRITE_NEW_FIT_CASE(4,UnorientedSphereFitField)
+            WRITE_NEW_FIT_CASE(5,BestPlaneFitField)
+            WRITE_NEW_FIT_CASE(6,BestSphereFitField)
+            WRITE_NEW_FIT_CASE(7,BestOrientedSphereFitField)
+            WRITE_NEW_FIT_CASE(8,OnePlaneFitField)
+            WRITE_NEW_FIT_CASE(9,OneSphereFitField)
+            WRITE_NEW_FIT_CASE(10,OneOrientedSphereFitField)
+            WRITE_NEW_FIT_CASE(11,DistanceFieldFromOnePoint)
+
+            default: throw std::runtime_error("Unknown Field type!");
         }
     }
     return *p;
 }
+
+#undef WRITE_NEW_FIT_CASE
