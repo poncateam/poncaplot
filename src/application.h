@@ -55,6 +55,7 @@ namespace poncaplot {
                 *pass3Widget, *pass4Widget;
 
         nanogui::IntBox<int> *pointIdSelector{nullptr};
+        nanogui::Slider *scaleSlider{nullptr};
 
         BaseFitField *passPlaneFit, *passSphereFit, *passOrientedSphereFit, *passUnorientedSphereFit,
                 *passOnePlaneFit, *passOneSphereFit, *passOneOrientedSphereFit,
