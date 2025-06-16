@@ -5,6 +5,9 @@
 #include "dataManager.h"
 #include "drawingPass.h"
 
+#include <sstream>
+#include <iomanip>
+
 #include <nanogui/window.h>
 #include <nanogui/colorpicker.h>
 #include <nanogui/combobox.h>
@@ -97,12 +100,38 @@ namespace poncaplot {
             b->set_callback([&] {
                 auto path = file_dialog(
                         {{"png", "PNG image"}}, true);
+                if (path.empty()) return;
                 std::cout << "Save file to: " << path << std::endl;
 
                 size_t factor = 2;
                 float *texture = new float[factor * tex_width * tex_height * 4];
                 renderPassesInternal(factor, texture);
                 write_image(tex_width*factor, tex_height*factor, texture, path);
+                delete [] (texture);
+            });
+            b = new Button(tools, "Save sequence (scale)");
+            b->set_callback([&] {
+                auto path = file_dialog(
+                        {{"", "basename"}}, true);
+                if (path.empty()) return;
+                std::cout << "Save sequence to: " << path << std::endl;
+
+                size_t factor = 2;
+                float *texture = new float[factor * tex_width * tex_height * 4];
+                auto prev = scaleSlider->value();
+                int start {int(scaleSlider->range().first)};
+                int end   {int(scaleSlider->range().second)};
+                int length = end-start;
+                for (int i = 0; i < length; ++i)
+                {
+                    scaleSlider->callback()(float(start+i));
+                    std::ostringstream oss;
+                    oss << path << std::setfill('0') << std::setw(4) << i << ".png";
+                    renderPassesInternal(factor, texture);
+                    write_image(tex_width*factor, tex_height*factor, texture, oss.str());
+                }
+                scaleSlider->set_value(prev);
+                scaleSlider->callback()(prev);
                 delete [] (texture);
             });
         }
@@ -176,10 +205,10 @@ namespace poncaplot {
                 renderPasses();
             });
             new nanogui::Label(genericFitWidget, "Scale");
-            auto slider = new Slider(genericFitWidget);
-            slider->set_value(passPlaneFit->params.m_scale); // init with plane, but sync with current.
-            slider->set_range({10, 750});
-            slider->set_callback([&](float value) {
+            scaleSlider = new Slider(genericFitWidget);
+            scaleSlider->set_value(passPlaneFit->params.m_scale); // init with plane, but sync with current.
+            scaleSlider->set_range({10, 750});
+            scaleSlider->set_callback([&](float value) {
                 passPlaneFit->params.m_scale = value;
                 passSphereFit->params.m_scale = value;
                 passOrientedSphereFit->params.m_scale = value;
