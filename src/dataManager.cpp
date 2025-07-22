@@ -77,17 +77,16 @@ DataManager::loadPointCloud(const std::string& path){
 
 void
 DataManager::computeNormals(int k){
-    using WeightFunc = Ponca::DistWeightFunc<DataPoint,Ponca::ConstantWeightKernel<typename DataPoint::Scalar> >;
-    using PlaneFit = Ponca::Basket<DataPoint ,WeightFunc, Ponca::CovariancePlaneFit>;
+    using NeighborFilter = Ponca::DistWeightFunc<DataPoint,Ponca::ConstantWeightKernel<typename DataPoint::Scalar> >;
+    using PlaneFit = Ponca::Basket<DataPoint, NeighborFilter, Ponca::CovariancePlaneFit>;
 
     std::cout << "Recompute normals" << std::endl;
 
     for (auto& pp : m_points){
         VectorType p {pp.x(),pp.y()};
         PlaneFit fit;
-        fit.setWeightFunc(WeightFunc());
         // Set the evaluation position
-        fit.init(p);
+        fit.setNeighborFilter(NeighborFilter(p));
         // Fit plane (method compute handles multipass fitting
         if (fit.computeWithIds(m_tree.k_nearest_neighbors(p, k), m_tree.points()) == Ponca::STABLE) {
             pp.z() = std::acos(fit.primitiveGradient().normalized().x());

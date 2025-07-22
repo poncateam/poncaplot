@@ -20,16 +20,16 @@ private:
     VectorType m_pos, m_normal;
 };
 
-using WeightFunc = Ponca::DistWeightFunc<DataPoint,Ponca::SmoothWeightKernel<typename DataPoint::Scalar> >;
-using ConstWeightFunc = Ponca::DistWeightFunc<DataPoint,Ponca::ConstantWeightKernel<typename DataPoint::Scalar> >;
+using WeightFunc = Ponca::DistWeightFunc<DataPoint,Ponca::SmoothWeightKernel<DataPoint::Scalar> >;
+using ConstWeightFunc = Ponca::DistWeightFunc<DataPoint,Ponca::ConstantWeightKernel<DataPoint::Scalar> >;
 
-using PlaneFit = Ponca::Basket<DataPoint ,WeightFunc, Ponca::CovariancePlaneFit>;
-using ConstPlaneFit = Ponca::Basket<DataPoint ,ConstWeightFunc, Ponca::CovariancePlaneFit>;
-using SphereFit = Ponca::Basket<DataPoint ,WeightFunc, Ponca::SphereFit>;
-using ConstSphereFit = Ponca::Basket<DataPoint ,ConstWeightFunc, Ponca::SphereFit>;
-using OrientedSphereFit= Ponca::Basket<DataPoint ,WeightFunc, Ponca::OrientedSphereFit>;
-using ConstOrientedSphereFit= Ponca::Basket<DataPoint ,ConstWeightFunc, Ponca::OrientedSphereFit>;
-using UnorientedSphereFit = Ponca::Basket<DataPoint ,WeightFunc, Ponca::UnorientedSphereFit>;
+using PlaneFit = Ponca::Basket<DataPoint, WeightFunc, Ponca::CovariancePlaneFit>;
+using ConstPlaneFit = Ponca::Basket<DataPoint, ConstWeightFunc, Ponca::CovariancePlaneFit>;
+using SphereFit = Ponca::Basket<DataPoint, WeightFunc, Ponca::SphereFit>;
+using ConstSphereFit = Ponca::Basket<DataPoint, ConstWeightFunc, Ponca::SphereFit>;
+using OrientedSphereFit= Ponca::Basket<DataPoint, WeightFunc, Ponca::OrientedSphereFit>;
+using ConstOrientedSphereFit= Ponca::Basket<DataPoint, ConstWeightFunc, Ponca::OrientedSphereFit>;
+using UnorientedSphereFit = Ponca::Basket<DataPoint, WeightFunc, Ponca::UnorientedSphereFit>;
 
 
 

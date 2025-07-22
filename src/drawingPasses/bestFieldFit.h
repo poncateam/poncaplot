@@ -10,7 +10,7 @@ struct SingleFitField : public _Base {
 
     using Base = _Base;
     using FitType = _FitType;
-    using WeightFunc = typename FitType::WeightFunction;
+    using NeighborFilter = typename FitType::NeighborFilter;
 
     virtual float configureAndFit(const KdTree& points, FitType& fit, RenderingContext ctx) = 0;
 
@@ -71,7 +71,7 @@ struct BestFitField : public SingleFitField<_FitType, DrawingPass> {
     ~BestFitField() override = default;
 
     using FitType = _FitType;
-    using WeightFunc = typename FitType::WeightFunction;
+    using NeighborFilter = typename FitType::NeighborFilter;
 
     /// Method called at the end of the fitting process, only for stable fits
     virtual void postProcess(FitType& /*fit*/){};
@@ -79,8 +79,7 @@ struct BestFitField : public SingleFitField<_FitType, DrawingPass> {
     inline float configureAndFit(const KdTree& points, FitType& fit, RenderingContext ctx) override {
         // Configure computation to be centered on the point cloud coordinates
         float scale = points.nodes()[0].getAabb()->diagonal().norm();
-        fit.setWeightFunc(WeightFunc(scale));
-        fit.init(points.nodes()[0].getAabb()->center());
+        fit.setNeighborFilter(NeighborFilter(points.nodes()[0].getAabb()->center(), scale));
         // Compute fit
         fit.compute(points.points());
         postProcess(fit);
@@ -106,19 +105,18 @@ struct OnePointFitField : public SingleFitField<_FitType, BaseFitField>, public 
     ~OnePointFitField() override = default;
 
     using FitType     = _FitType;
-    using WeightFunc = typename FitType::WeightFunction;
+    using NeighborFilter = typename FitType::NeighborFilter;
     using Scalar     = typename FitType::Scalar;
 
     /// Method called at the end of the fitting process, only for stable fits
     virtual void postProcess(FitType& /*fit*/){};
 
     inline float configureAndFit(const KdTree& points, FitType& fit, RenderingContext ctx) override {
-        // Configure computation to be centered on the point cloud coordinates
-        fit.setWeightFunc(WeightFunc(BaseFitField::params.m_scale));
         auto query = points.points()[pointId].pos();
         // Compute fit
         for (int iter = 0; iter != BaseFitField::params.m_iter; ++iter) {
-            fit.init(query);
+            // Configure computation to be centered on the point cloud coordinates
+            fit.setNeighborFilter(NeighborFilter(query, BaseFitField::params.m_scale));
             if (fit.computeWithIds(points.range_neighbors(query, BaseFitField::params.m_scale), points.points()) ==
                 Ponca::STABLE) {
                 postProcess(fit);

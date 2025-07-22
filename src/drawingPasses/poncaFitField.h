@@ -10,7 +10,7 @@ struct FitField : public BaseFitField {
     ~FitField() override = default;
 
     using FitType = _FitType;
-    using WeightFunc = typename FitType::WeightFunction;
+    using NeighborFilter = typename FitType::NeighborFilter;
 
     /// Method called at the end of the fitting process, only for stable fits
     virtual void postProcess(FitType& /*fit*/){};
@@ -36,11 +36,10 @@ private:
                 DataPoint::VectorType query (coord.first, coord.second);
 
                 FitType fit;
-                // Set a weighting function instance
-                fit.setWeightFunc(WeightFunc(params.m_scale));
                 // Set the evaluation position
                 for (int iter = 0; iter != params.m_iter; ++iter) {
-                    fit.init(query);
+                    // Set a weighting function instance
+                    fit.setNeighborFilter(NeighborFilter(query, params.m_scale));
                     // Fit plane (method compute handles multipass fitting
                     if (fit.computeWithIds(points.range_neighbors(query, params.m_scale), points.points()) ==
                         Ponca::STABLE) {
@@ -81,15 +80,13 @@ private:
             float potential {0.f};
             do {
                 FitType fit;
-                // Set a weighting function instance
-                fit.setWeightFunc(WeightFunc(params.m_scale));
 
                 // Set the evaluation position
                 for (int iter = 0; iter != params.m_iter; ++iter) {
                     x = nextx;
 
-                    // project to next location and draw
-                    fit.init(x);
+                    // Set a weighting function instance
+                    fit.setNeighborFilter(NeighborFilter(x, params.m_scale));
                     if (fit.computeWithIds(points.range_neighbors(x, params.m_scale), points.points()) ==
                         Ponca::STABLE) {
                         postProcess(fit);
@@ -97,7 +94,7 @@ private:
                         potential = fit.potential(nextx);
 
                         // ask to stop the projection procedure if motion is below one pixel
-                        int nbPix = bresenham(ctx.pointToPix( x ) , ctx.pointToPix( nextx ),
+                        int nbPix = bresenham(ctx.pointToPix( x ),  ctx.pointToPix( nextx ),
                                     {ctx.w, ctx.h},
                                          [buffer, ctx](int x, int y){
                              auto *b = buffer + (x + y * ctx.w) * 4;
