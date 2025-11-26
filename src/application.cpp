@@ -57,20 +57,26 @@ namespace poncaplot {
                                             Alignment::Middle, 0, 6));
             auto *b = new Button(tools, "Open point cloud");
             b->set_callback([&] {
-                auto path = file_dialog(
+                auto path = file_dialog( this, nanogui::FileDialogType::Open,
                         {{"dat", "Text file x y nx y"},
-                         {"txt", "Text file x y nx y"}}, false);
-                std::cout << "Load file from: " << path << std::endl;
-                m_dataMgr->loadPointCloud(path);
+                         {"txt", "Text file x y nx y"}});
+                if (path.empty() || path[0].empty()) {
+                    std::cerr << "Open point cloud error : Received an empty file name" << std::endl; return;
+                }
+                std::cout << "Load file from: " << path[0] << std::endl;
+                m_dataMgr->loadPointCloud(path[0]);
                 pointIdSelector->set_max_value(m_dataMgr->getPointContainer().size() - 1);
             });
             b = new Button(tools, "Save point cloud");
             b->set_callback([&] {
-                auto path = file_dialog(
+                auto path = file_dialog( this, nanogui::FileDialogType::Save,
                         {{"dat", "Text file x y nx y"},
-                         {"txt", "Text file x y nx y"}}, true);
-                std::cout << "Save file to: " << path << std::endl;
-                m_dataMgr->savePointCloud(path);
+                         {"txt", "Text file x y nx y"}});
+                if (path.empty() || path[0].empty()) {
+                    std::cerr << "Save point cloud error : Received an empty file name" << std::endl; return;
+                }
+                std::cout << "Save file to: " << path[0] << std::endl;
+                m_dataMgr->savePointCloud(path[0]);
             });
             b = new Button(tools, "Fit point cloud view");
             b->set_callback([&] {
@@ -98,23 +104,27 @@ namespace poncaplot {
             });
             b = new Button(tools, "Save image");
             b->set_callback([&] {
-                auto path = file_dialog(
-                        {{"png", "PNG image"}}, true);
-                if (path.empty()) return;
-                std::cout << "Save file to: " << path << std::endl;
+                auto path = file_dialog(this, nanogui::FileDialogType::Save,
+                        {{"png", "PNG image"}});
+                if (path.empty() || path[0].empty()) {
+                    std::cerr << "Save image error : Received an empty file name" << std::endl; return;
+                }
+                std::cout << "Save file to: " << path[0] << std::endl;
 
                 size_t factor = 2;
                 float *texture = new float[factor * tex_width * tex_height * 4];
                 renderPassesInternal(factor, texture);
-                write_image(tex_width*factor, tex_height*factor, texture, path);
+                write_image(tex_width*factor, tex_height*factor, texture, path[0]);
                 delete [] (texture);
             });
             b = new Button(tools, "Save sequence (scale)");
             b->set_callback([&] {
-                auto path = file_dialog(
-                        {{"", "basename"}}, true);
-                if (path.empty()) return;
-                std::cout << "Save sequence to: " << path << std::endl;
+                auto path = file_dialog( this, nanogui::FileDialogType::Save,
+                {{"", "basename"}});
+                if (path.empty() || path[0].empty()) {
+                    std::cerr << "Save sequence (scale) error : Received an empty file name" << std::endl; return;
+                }
+                std::cout << "Save sequence to: " << path[0] << std::endl;
 
                 size_t factor = 2;
                 float *texture = new float[factor * tex_width * tex_height * 4];
@@ -126,7 +136,7 @@ namespace poncaplot {
                 {
                     scaleSlider->callback()(float(start+i));
                     std::ostringstream oss;
-                    oss << path << std::setfill('0') << std::setw(4) << i << ".png";
+                    oss << path[0] << std::setfill('0') << std::setw(4) << i << ".png";
                     renderPassesInternal(factor, texture);
                     write_image(tex_width*factor, tex_height*factor, texture, oss.str());
                 }
