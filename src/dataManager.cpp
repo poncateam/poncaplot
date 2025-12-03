@@ -85,9 +85,9 @@ DataManager::computeNormals(int k){
     for (auto& pp : m_points){
         VectorType p {pp.x(),pp.y()};
         PlaneFit fit;
-        fit.setWeightFunc(WeightFunc());
+        fit.setWeightFunc({p});
         // Set the evaluation position
-        fit.init(p);
+        fit.init();
         // Fit plane (method compute handles multipass fitting
         if (fit.computeWithIds(m_tree.k_nearest_neighbors(p, k), m_tree.points()) == Ponca::STABLE) {
             pp.z() = std::acos(fit.primitiveGradient().normalized().x());

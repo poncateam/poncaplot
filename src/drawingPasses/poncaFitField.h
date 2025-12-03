@@ -10,7 +10,6 @@ struct FitField : public BaseFitField {
     ~FitField() override = default;
 
     using FitType = _FitType;
-    using WeightFunc = typename FitType::WeightFunction;
 
     /// Method called at the end of the fitting process, only for stable fits
     virtual void postProcess(FitType& /*fit*/){};
@@ -37,10 +36,10 @@ private:
 
                 FitType fit;
                 // Set a weighting function instance
-                fit.setWeightFunc(WeightFunc(params.m_scale));
+                fit.setWeightFunc({query, params.m_scale});
                 // Set the evaluation position
                 for (int iter = 0; iter != params.m_iter; ++iter) {
-                    fit.init(query);
+                    fit.init();
                     // Fit plane (method compute handles multipass fitting
                     if (fit.computeWithIds(points.range_neighbors(query, params.m_scale), points.points()) ==
                         Ponca::STABLE) {
@@ -82,14 +81,14 @@ private:
             do {
                 FitType fit;
                 // Set a weighting function instance
-                fit.setWeightFunc(WeightFunc(params.m_scale));
+                fit.setWeightFunc({x, params.m_scale});
 
                 // Set the evaluation position
                 for (int iter = 0; iter != params.m_iter; ++iter) {
                     x = nextx;
 
                     // project to next location and draw
-                    fit.init(x);
+                    fit.init();
                     if (fit.computeWithIds(points.range_neighbors(x, params.m_scale), points.points()) ==
                         Ponca::STABLE) {
                         postProcess(fit);
