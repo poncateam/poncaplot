@@ -20,8 +20,8 @@ private:
     VectorType m_pos, m_normal;
 };
 
-using WeightFunc = Ponca::DistWeightFunc<DataPoint,Ponca::SmoothWeightKernel<typename DataPoint::Scalar> >;
-using ConstWeightFunc = Ponca::DistWeightFunc<DataPoint,Ponca::ConstantWeightKernel<typename DataPoint::Scalar> >;
+using WeightFunc = Ponca::DistWeightFilter<DataPoint,Ponca::SmoothWeightKernel<typename DataPoint::Scalar> >;
+using ConstWeightFunc = Ponca::DistWeightFilter<DataPoint,Ponca::ConstantWeightKernel<typename DataPoint::Scalar> >;
 
 using PlaneFit = Ponca::Basket<DataPoint ,WeightFunc, Ponca::CovariancePlaneFit>;
 using ConstPlaneFit = Ponca::Basket<DataPoint ,ConstWeightFunc, Ponca::CovariancePlaneFit>;

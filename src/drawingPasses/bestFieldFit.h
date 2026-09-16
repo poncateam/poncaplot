@@ -6,11 +6,11 @@
 template <typename _FitType, typename _Base>
 struct SingleFitField : public _Base {
     inline explicit SingleFitField() : _Base() {}
-    ~SingleFitField() override = default;
+    virtual ~SingleFitField() override = default;
 
     using Base = _Base;
     using FitType = _FitType;
-    using WeightFunc = typename FitType::WeightFunction;
+    using WeightFunc = typename FitType::NeighborFilter;
 
     virtual float configureAndFit(const KdTree& points, FitType& fit, RenderingContext ctx) = 0;
 
@@ -51,7 +51,7 @@ private:
     _FitType m_lastFit;
     void renderPointsTrajectories(const KdTree& points, float*buffer, RenderingContext ctx) {
 #pragma omp parallel for default(none) shared (points, buffer, ctx)
-        for (int i = 0; i < points.point_count(); ++i) {
+        for (int i = 0; i < points.pointCount(); ++i) {
             const auto& p = points.points()[i];
             Base::bresenham(ctx.pointToPix(p.pos()), ctx.pointToPix(m_lastFit.project(p.pos())),{ctx.w, ctx.h},
                             [buffer, ctx](int x, int y) {
@@ -78,7 +78,7 @@ struct BestFitField : public SingleFitField<_FitType, DrawingPass> {
     inline float configureAndFit(const KdTree& points, FitType& fit, RenderingContext ctx) override {
         // Configure computation to be centered on the point cloud coordinates
         float scale = points.nodes()[0].getAabb()->diagonal().norm();
-        fit.setWeightFunc({points.nodes()[0].getAabb()->center(), scale});
+        fit.setNeighborFilter({points.nodes()[0].getAabb()->center(), scale});
         fit.init();
         // Compute fit
         fit.compute(points.points());
@@ -115,9 +115,9 @@ struct OnePointFitField : public SingleFitField<_FitType, BaseFitField>, public 
         auto query = points.points()[pointId].pos();
         // Compute fit
         for (int iter = 0; iter != BaseFitField::params.m_iter; ++iter) {
-            fit.setWeightFunc({query, BaseFitField::params.m_scale});
+            fit.setNeighborFilter({query, BaseFitField::params.m_scale});
             fit.init();
-            if (fit.computeWithIds(points.range_neighbors(query, BaseFitField::params.m_scale), points.points()) ==
+            if (fit.computeWithIds(points.rangeNeighbors(query, BaseFitField::params.m_scale), points.points()) ==
                 Ponca::STABLE) {
                 postProcess(fit);
                 query = fit.project(query);

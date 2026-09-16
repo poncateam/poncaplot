@@ -120,7 +120,7 @@ struct DisplayPoint : public DrawingPass {
         const int scaledHalfSize = ctx.pointToPix(m_halfSize);
         const int pLargeSize = 2 * scaledHalfSize;
 #pragma omp parallel for default(none) shared(points, buffer, ctx, scaledHalfSize, pLargeSize)
-        for (int pid = 0; pid< points.point_count(); ++pid){
+        for (int pid = 0; pid< points.pointCount(); ++pid){
             const auto& p = points.points()[pid];
             // Build vector that is orthogonal to the normal vector
             const VectorType& tangent {p.normal().y(), -p.normal().x()};
