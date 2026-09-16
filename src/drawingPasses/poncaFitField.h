@@ -36,12 +36,12 @@ private:
 
                 FitType fit;
                 // Set a weighting function instance
-                fit.setWeightFunc({query, params.m_scale});
+                fit.setNeighborFilter({query, params.m_scale});
                 // Set the evaluation position
                 for (int iter = 0; iter != params.m_iter; ++iter) {
                     fit.init();
                     // Fit plane (method compute handles multipass fitting
-                    if (fit.computeWithIds(points.range_neighbors(query, params.m_scale), points.points()) ==
+                    if (fit.computeWithIds(points.rangeNeighbors(query, params.m_scale), points.points()) ==
                         Ponca::STABLE) {
                         query = fit.project(query);
                     }
@@ -67,7 +67,7 @@ private:
     void renderPointsTrajectories(const KdTree& points, float*buffer, RenderingContext ctx){
 
 #pragma omp parallel for default(none) shared (points, buffer, ctx)
-        for (int i = 0; i < points.point_count(); ++i)
+        for (int i = 0; i < points.pointCount(); ++i)
         {
             const auto& p = points.points()[i];
             /// x is going to follow the flow
@@ -81,7 +81,7 @@ private:
             do {
                 FitType fit;
                 // Set a weighting function instance
-                fit.setWeightFunc({x, params.m_scale});
+                fit.setNeighborFilter({x, params.m_scale});
 
                 // Set the evaluation position
                 for (int iter = 0; iter != params.m_iter; ++iter) {
@@ -89,7 +89,7 @@ private:
 
                     // project to next location and draw
                     fit.init();
-                    if (fit.computeWithIds(points.range_neighbors(x, params.m_scale), points.points()) ==
+                    if (fit.computeWithIds(points.rangeNeighbors(x, params.m_scale), points.points()) ==
                         Ponca::STABLE) {
                         postProcess(fit);
                         nextx = fit.project(x);

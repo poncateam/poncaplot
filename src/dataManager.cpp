@@ -77,7 +77,7 @@ DataManager::loadPointCloud(const std::string& path){
 
 void
 DataManager::computeNormals(int k){
-    using WeightFunc = Ponca::DistWeightFunc<DataPoint,Ponca::ConstantWeightKernel<typename DataPoint::Scalar> >;
+    using WeightFunc = Ponca::DistWeightFilter<DataPoint,Ponca::ConstantWeightKernel<typename DataPoint::Scalar> >;
     using PlaneFit = Ponca::Basket<DataPoint ,WeightFunc, Ponca::CovariancePlaneFit>;
 
     std::cout << "Recompute normals" << std::endl;
@@ -85,11 +85,11 @@ DataManager::computeNormals(int k){
     for (auto& pp : m_points){
         VectorType p {pp.x(),pp.y()};
         PlaneFit fit;
-        fit.setWeightFunc({p});
+        fit.setNeighborFilter({p});
         // Set the evaluation position
         fit.init();
         // Fit plane (method compute handles multipass fitting
-        if (fit.computeWithIds(m_tree.k_nearest_neighbors(p, k), m_tree.points()) == Ponca::STABLE) {
+        if (fit.computeWithIds(m_tree.kNearestNeighbors(p, k), m_tree.points()) == Ponca::STABLE) {
             pp.z() = std::acos(fit.primitiveGradient().normalized().x());
         } else
             std::cerr << "Something weird happened here..." << std::endl;
@@ -100,7 +100,7 @@ DataManager::computeNormals(int k){
 void
 DataManager::fitPointCloudToRange(const std::pair<float,float>& rangesEnd, const std::pair<float,float>& rangesStart){
     if (m_points.empty()) return;
-    if (m_tree.node_count() == 0) updateKdTree();
+    if (m_tree.nodeCount() == 0) updateKdTree();
     auto aabb = m_tree.nodes()[0].getAabb();
     if (aabb){
         VectorType requestedSize {rangesEnd.first - rangesStart.first, rangesEnd.second - rangesStart.second};

@@ -53,7 +53,7 @@ struct DistanceFieldWithKdTree : public DrawingPass {
                 auto *b = buffer + (i + j * ctx.w) * 4;
                 auto coord = ctx.pixToPoint(i,j);
                 DataPoint::VectorType query (coord.first, coord.second);
-                auto res = points.nearest_neighbor( query );
+                auto res = points.nearestNeighbor( query );
                 if(res.begin()!=res.end()) {
                     auto nei = points.points()[res.get()].pos();
                     float dist = (nei-query).norm();

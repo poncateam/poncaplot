@@ -42,8 +42,7 @@ public:
 
     /// Update point collection from point container
     inline void updateKdTree() {
-        if(m_points.empty()) m_tree.clear();
-        else m_tree.build(m_points );
+        m_tree.build(m_points );
         m_updateFunction();
     }
 
