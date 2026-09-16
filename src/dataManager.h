@@ -71,20 +71,21 @@ public:
     void computeNormals(int k = 3);
 
     /// Names of the supported drawing passes
-    static constexpr size_t nbSupportedDrawingPasses = 12;
+    static constexpr size_t nbSupportedDrawingPasses = 13;
     const std::map<const std::string, size_t> supportedDrawingPasses {
                     {"Distance Field", 0},
                     {"MLS - Plane", 1},
                     {"MLS - Sphere", 2},
                     {"MLS - Oriented Sphere", 3},
                     {"MLS - Unoriented Sphere", 4},
-                    {"Best Fit - Plane", 5},
-                    {"Best Fit - Sphere", 6},
-                    {"Best Fit - Oriented Sphere", 7},
-                    {"One Fit - Plane", 8},
-                    {"One Fit - Sphere", 9},
-                    {"One Fit - Oriented Sphere", 10},
-                    {"One Point - Scale", 11}
+                    {"Global - HRBF", 5},
+                    {"Best Fit - Plane", 6},
+                    {"Best Fit - Sphere", 7},
+                    {"Best Fit - Oriented Sphere", 8},
+                    {"One Fit - Plane", 9},
+                    {"One Fit - Sphere", 10},
+                    {"One Fit - Oriented Sphere", 11},
+                    {"One Point - Scale", 12}
             };
 
     DrawingPass* getDrawingPass(const std::string& name);
@@ -106,13 +107,14 @@ public:
             WRITE_FIT_CASE(2,SphereFitField)
             WRITE_FIT_CASE(3,OrientedSphereFitField)
             WRITE_FIT_CASE(4,UnorientedSphereFitField)
-            WRITE_FIT_CASE(5,BestPlaneFitField)
-            WRITE_FIT_CASE(6,BestSphereFitField)
-            WRITE_FIT_CASE(7,BestOrientedSphereFitField)
-            WRITE_FIT_CASE(8,OnePlaneFitField)
-            WRITE_FIT_CASE(9,OneSphereFitField)
-            WRITE_FIT_CASE(10,OneOrientedSphereFitField)
-            WRITE_FIT_CASE(11,DistanceFieldFromOnePoint)
+            WRITE_FIT_CASE(5,HRBFFitField)
+            WRITE_FIT_CASE(6,BestPlaneFitField)
+            WRITE_FIT_CASE(7,BestSphereFitField)
+            WRITE_FIT_CASE(8,BestOrientedSphereFitField)
+            WRITE_FIT_CASE(9,OnePlaneFitField)
+            WRITE_FIT_CASE(10,OneSphereFitField)
+            WRITE_FIT_CASE(11,OneOrientedSphereFitField)
+            WRITE_FIT_CASE(12,DistanceFieldFromOnePoint)
             default: return false;
         }
         return true;

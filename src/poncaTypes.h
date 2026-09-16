@@ -30,7 +30,7 @@ using ConstSphereFit = Ponca::Basket<DataPoint ,ConstWeightFunc, Ponca::SphereFi
 using OrientedSphereFit= Ponca::Basket<DataPoint ,WeightFunc, Ponca::OrientedSphereFit>;
 using ConstOrientedSphereFit= Ponca::Basket<DataPoint ,ConstWeightFunc, Ponca::OrientedSphereFit>;
 using UnorientedSphereFit = Ponca::Basket<DataPoint ,WeightFunc, Ponca::UnorientedSphereFit>;
-
+using HRBFFit = Ponca::HRBF<DataPoint>;
 
 
 

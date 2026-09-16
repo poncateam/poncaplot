@@ -139,3 +139,5 @@ struct OneSphereFitField : public OnePointFitField<ConstSphereFit>{
 struct OneOrientedSphereFitField : public OnePointFitField<ConstOrientedSphereFit>{
     void postProcess(typename OnePointFitField<ConstOrientedSphereFit>::FitType& fit) override { fit.applyPrattNorm(); };
 };
+
+using HRBFFitField = OnePointFitField<HRBFFit>;
